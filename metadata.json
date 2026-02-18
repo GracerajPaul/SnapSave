@@ -1,0 +1,5 @@
+{
+  "name": "SnapSave - PIN-Based Image Vault",
+  "description": "A registration-free, secure image vault with Telegram-backed storage, PIN protection, and auto-delete features.",
+  "requestFramePermissions": []
+}
