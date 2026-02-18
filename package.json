@@ -14,11 +14,13 @@
     "react-dom": "^19.0.0",
     "lucide-react": "^0.460.0",
     "jszip": "^3.10.1",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^3.0.0",
+    "@supabase/supabase-js": "^2.45.4"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.3",
     "vite": "^6.0.0"
