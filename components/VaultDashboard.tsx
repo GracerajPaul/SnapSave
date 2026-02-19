@@ -4,7 +4,7 @@ import {
   Upload, Download, Trash2, Settings, Check, 
   FileArchive, Loader2, Search, Database, Clock, 
   ShieldAlert, Image as ImageIcon, HardDrive, Network,
-  Languages, CheckSquare, X, ListFilter, Command, Activity
+  Languages, CheckSquare, X, ListFilter, Command, Activity, Terminal
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { Vault, VaultImage, ExpiryOption } from '../types.ts';
@@ -16,50 +16,50 @@ import { ImageCard } from './ImageCard.tsx';
 // Comprehensive Translation Engine
 const TRANSLATIONS: Record<string, any> = {
   en: {
-    dashboardTitle: "Nexus Dashboard",
-    storageUsed: "Usage",
-    remainingCap: "Node Capacity",
-    sessionType: "Node Class",
-    status: "Encryption",
-    searchPlaceholder: "Search node stream...",
-    injectImages: "Inject Shards",
-    bulkExport: "Export All (ZIP)",
+    dashboardTitle: "Nexus Operational Dashboard",
+    storageUsed: "Usage Statistics",
+    remainingCap: "Node Density",
+    sessionType: "Class Protocol",
+    status: "Encryption Status",
+    searchPlaceholder: "Filter shard stream...",
+    injectImages: "Inject Assets",
+    bulkExport: "Full Node Archive",
     activeNodes: "Nodes",
-    selectionMode: "Selection Mode",
-    downloadSelected: "Export Selection (ZIP)",
+    selectionMode: "Manual Selection",
+    downloadSelected: "Archive Selection",
     exportModalTitle: "Archival Protocol",
-    exportAll: "Full Export to ZIP",
-    exportSelected: "Selective Export to ZIP",
+    exportAll: "Full Stream Export",
+    exportSelected: "Segmented Export",
     compiling: "Compiling binary streams...",
-    cancel: "Abort",
-    emptyVault: "Nexus Empty",
-    injectPrompt: "No active shards identified in stream.",
+    cancel: "Abort Handshake",
+    emptyVault: "Nexus Idle",
+    injectPrompt: "No active assets detected in this node.",
     processing: "Hydrating Shard",
     saving: "Encrypting Archive...",
-    success: "Handshake Complete",
+    success: "Protocol Handshake Complete",
   },
   es: {
-    dashboardTitle: "Panel Nexus",
-    storageUsed: "Uso",
-    remainingCap: "Capacidad",
-    sessionType: "Clase",
-    status: "Cifrado",
-    searchPlaceholder: "Buscar flujo...",
-    injectImages: "Inyectar",
-    bulkExport: "Exportar (ZIP)",
+    dashboardTitle: "Panel Operativo Nexus",
+    storageUsed: "Estadísticas de Uso",
+    remainingCap: "Densidad de Nodo",
+    sessionType: "Protocolo de Clase",
+    status: "Estado de Cifrado",
+    searchPlaceholder: "Filtrar flujo de fragmentos...",
+    injectImages: "Inyectar Activos",
+    bulkExport: "Archivo Completo de Nodo",
     activeNodes: "Nodos",
-    selectionMode: "Selección",
-    downloadSelected: "Descargar (ZIP)",
+    selectionMode: "Selección Manual",
+    downloadSelected: "Selección de Archivo",
     exportModalTitle: "Protocolo de Archivo",
-    exportAll: "Exportación Total",
-    exportSelected: "Exportación Parcial",
-    compiling: "Compilando flujos...",
-    cancel: "Abortar",
-    emptyVault: "Nexus Vacío",
-    injectPrompt: "No se identifican fragmentos activos.",
+    exportAll: "Exportación de Flujo Completo",
+    exportSelected: "Exportación Segmentada",
+    compiling: "Compilando flujos binarios...",
+    cancel: "Abortar Protocolo",
+    emptyVault: "Nexus Inactivo",
+    injectPrompt: "No se detectaron activos en este nodo.",
     processing: "Hidratando fragmento",
     saving: "Cifrando archivo...",
-    success: "Handshake completado",
+    success: "Protocolo completado",
   }
 };
 
@@ -114,7 +114,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.size > MAX_FILE_SIZE) {
-          alert(`CRITICAL: "${file.name}" exceeds 50MB protocol limit.`);
+          alert(`CRITICAL ERROR: File protocol limit is 50MB.`);
           continue;
         }
         setUploadStatus({ fileName: file.name, progress: 0 });
@@ -133,7 +133,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           };
           updatedImages.push(newAsset);
         } catch (uploadErr: any) {
-          alert(`INJECTION FAILED: ${uploadErr.message}`);
+          alert(`INJECTION FAILED: Cloud uplink refused.`);
           break;
         }
       }
@@ -159,11 +159,11 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
 
     try {
       const zip = new JSZip();
-      const folder = zip.folder(`${vault.username}_Archive`);
+      const folder = zip.folder(`${vault.username}_Secure_Archive`);
       
       for (let i = 0; i < targets.length; i++) {
         const img = targets[i];
-        setZipStatus(`${t.processing}: ${img.name.slice(0, 12)}... (${i + 1}/${targets.length})`);
+        setZipStatus(`${t.processing}: ${img.name.slice(0, 15)}... (${i + 1}/${targets.length})`);
         
         try {
           const rawUrl = await TelegramService.getImageUrl(img.telegramFileId);
@@ -177,18 +177,18 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           folder?.file(img.name, data, { binary: true });
           successCount++;
         } catch (err) {
-          console.error(`Fetch failure: ${img.name}`);
+          console.error(`Asset hydration failed: ${img.name}`);
         }
       }
 
-      if (successCount === 0) throw new Error('Hydration sequence failed.');
+      if (successCount === 0) throw new Error('Data stream hydration failure.');
 
       setZipStatus(t.saving);
-      const content = await zip.generateAsync({ type: "blob", mimeType: "application/zip" });
+      const content = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
       const url = window.URL.createObjectURL(content);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `SnapSave_${vault.username}_Archive.zip`;
+      link.download = `SnapSave_${vault.username}_Archive_${Date.now()}.zip`;
       document.body.appendChild(link);
       link.click();
       
@@ -206,163 +206,170 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   };
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 max-w-[1600px] mx-auto">
       
-      {/* HUD Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* Precision HUD Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
         <HUDCard icon={<Database />} label={t.storageUsed} value={`${totalSize} MB`} />
-        <HUDCard icon={<Activity />} label={t.remainingCap} value="∞ Infinite" pulse />
+        <HUDCard icon={<Activity />} label={t.remainingCap} value="∞ Capacity" pulse color="cyan" />
         <HUDCard icon={<Clock />} label={t.sessionType} value={vault.expiry === ExpiryOption.NEVER ? 'Persistent' : 'Ephemeral'} />
-        <HUDCard icon={<ShieldAlert />} label={t.status} value={vault.isViewOnly ? 'Read Only' : 'Active'} color="cyan" />
+        <HUDCard icon={<ShieldAlert />} label={t.status} value={vault.isViewOnly ? 'Read Only' : 'Active Encryption'} color="indigo" />
       </div>
 
-      {/* Main Command Center */}
-      <div className="glass-card p-10 rounded-[3rem] relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/5 blur-[120px] pointer-events-none group-hover:bg-indigo-600/10 transition-all duration-1000"></div>
+      {/* Main Command Center Architecture */}
+      <div className="glass-card p-12 rounded-[4rem] relative overflow-hidden group border-white/5">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] pointer-events-none group-hover:bg-indigo-600/15 transition-all duration-1000"></div>
         
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 relative z-10">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Uplink Established</span>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-12 relative z-10">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
+              <span className="text-[11px] font-black text-slate-500 uppercase tracking-[0.5em]">Node Uplink: Standard_Handshake</span>
             </div>
-            <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase leading-none mb-3">
+            <h2 className="text-6xl md:text-8xl font-[1000] text-white italic tracking-tighter uppercase leading-[0.85] mb-4">
               {vault.vaultName || t.dashboardTitle}
             </h2>
-            <div className="flex items-center gap-4">
-               <div className="px-3 py-1 bg-slate-950 border border-white/5 rounded-lg">
-                  <span className="text-xs font-mono text-indigo-400 font-bold tracking-widest">{vault.username}</span>
+            <div className="flex flex-wrap items-center gap-6">
+               <div className="px-5 py-2 bg-slate-950/80 border border-white/10 rounded-2xl flex items-center gap-3">
+                  <Terminal className="w-4 h-4 text-indigo-400" />
+                  <span className="text-sm font-mono text-white font-bold tracking-widest uppercase">{vault.username}</span>
                </div>
-               <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic">Encrypted Node ID</span>
+               <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] italic">Authorized Cryptographic Node</span>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 items-center">
+          <div className="flex flex-wrap gap-6 items-center">
             <div className="relative group/search">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within/search:text-indigo-400 transition-colors" />
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-700 group-focus-within/search:text-indigo-400 transition-colors" />
               <input 
                 type="text"
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-950/80 border border-slate-800 rounded-2xl pl-12 pr-6 py-4 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full sm:w-80 text-white placeholder:text-slate-700 transition-all"
+                className="bg-slate-950/90 border border-slate-800 rounded-[2rem] pl-16 pr-10 py-5 text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full sm:w-[400px] text-white placeholder:text-slate-800 transition-all font-medium"
               />
             </div>
 
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black italic uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-3"
+              className="px-12 py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] font-[1000] italic uppercase tracking-[0.2em] shadow-2xl shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-4 group/inject"
             >
-              {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              {uploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6 group-hover/inject:translate-y-[-2px] transition-transform" />}
               {t.injectImages}
             </button>
 
-            <button 
-              onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
-              className="p-4 bg-slate-800/30 border border-slate-800 rounded-2xl text-slate-400 hover:text-white transition-all flex items-center gap-3"
-            >
-              <Languages className="w-5 h-5" />
-              <span className="text-[10px] font-black uppercase tracking-widest">{lang}</span>
-            </button>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
+                className="p-5 bg-slate-900/60 border border-slate-800 rounded-[1.5rem] text-slate-400 hover:text-white transition-all hover:bg-slate-800"
+              >
+                <Languages className="w-6 h-6" />
+              </button>
 
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-4 rounded-2xl border transition-all ${showSettings ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-600/30' : 'bg-slate-800/30 border-slate-800 text-slate-400 hover:text-white'}`}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className={`p-5 rounded-[1.5rem] border transition-all ${showSettings ? 'bg-indigo-600 border-indigo-500 text-white shadow-2xl shadow-indigo-600/40' : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'}`}
+              >
+                <Settings className="w-6 h-6" />
+              </button>
+            </div>
 
             <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
           </div>
         </div>
       </div>
 
-      {/* Progress Bars */}
+      {/* Dynamic Processing Overlay */}
       {(uploadStatus || zipLoading) && (
-        <div className="glass-card p-8 rounded-[2.5rem] border-indigo-500/20 animate-in slide-in-from-top-4 duration-500 shadow-2xl">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-indigo-500/10 rounded-lg"><Command className="w-4 h-4 text-indigo-400 animate-spin-slow" /></div>
-              <span className="text-sm font-black text-white italic tracking-wide uppercase">
-                {zipLoading ? zipStatus : `${uploadStatus?.fileName}`}
-              </span>
+        <div className="glass-card p-10 rounded-[3rem] border-indigo-500/30 animate-in slide-in-from-top-4 duration-700 shadow-2xl bg-indigo-950/5">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-5">
+              <div className="p-3 bg-indigo-500/10 rounded-2xl"><Command className="w-6 h-6 text-indigo-400 animate-spin-slow" /></div>
+              <div>
+                <span className="text-lg font-black text-white italic tracking-tight uppercase block">
+                  {zipLoading ? zipStatus : `${uploadStatus?.fileName}`}
+                </span>
+                <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Protocol in progress...</span>
+              </div>
             </div>
-            {uploadStatus && <span className="text-lg font-mono font-black text-indigo-400">{uploadStatus.progress}%</span>}
+            {uploadStatus && <span className="text-3xl font-mono font-black text-indigo-400 tracking-tighter">{uploadStatus.progress}%</span>}
           </div>
-          <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+          <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
             <div 
-              className={`h-full bg-gradient-to-r from-indigo-600 to-indigo-400 transition-all duration-300 ${zipLoading ? 'animate-pulse' : ''}`} 
+              className={`h-full bg-gradient-to-r from-indigo-700 via-indigo-500 to-cyan-400 transition-all duration-300 rounded-full ${zipLoading ? 'animate-pulse' : ''}`} 
               style={{ width: zipLoading ? '100%' : `${uploadStatus?.progress}%` }} 
             />
           </div>
         </div>
       )}
 
-      {/* Grid Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/5 pb-8">
-        <div className="flex items-center gap-8">
-          <h3 className="text-3xl font-[900] text-white italic uppercase tracking-tighter flex items-center gap-4">
-            <Network className="w-6 h-6 text-indigo-400" />
+      {/* Stream Control Header */}
+      <div className="flex flex-wrap items-center justify-between gap-10 border-b border-white/5 pb-10">
+        <div className="flex items-center gap-10">
+          <h3 className="text-4xl font-[1000] text-white italic uppercase tracking-tighter flex items-center gap-5">
+            <Network className="w-8 h-8 text-indigo-500" />
             Shard Stream
           </h3>
           <button 
             onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}
-            className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-3 ${selectionMode ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white'}`}
+            className={`px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-[0.3em] border transition-all flex items-center gap-3 ${selectionMode ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-600/30' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-white hover:bg-slate-800'}`}
           >
-            <ListFilter className="w-4 h-4" />
+            <ListFilter className="w-5 h-5" />
             {t.selectionMode}
           </button>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-8">
           {selectionMode && selectedIds.size > 0 && (
             <button 
               onClick={() => executeExport('selected')}
-              className="px-8 py-2.5 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-500 transition-all flex items-center gap-3 shadow-xl shadow-indigo-600/20"
+              className="px-10 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-[1000] uppercase tracking-[0.3em] transition-all flex items-center gap-4 shadow-2xl shadow-emerald-600/20 active:scale-95"
             >
-              Download Selection ({selectedIds.size})
+              Extract Segment ({selectedIds.size})
             </button>
           )}
           <button 
             onClick={() => setShowExportModal(true)} 
             disabled={zipLoading || vault.images.length === 0} 
-            className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 hover:text-indigo-400 transition-all flex items-center gap-3 group/exp"
+            className="text-sm font-[1000] uppercase tracking-[0.4em] text-slate-600 hover:text-indigo-400 transition-all flex items-center gap-4 group/exp active:scale-95"
           >
-            <FileArchive className="w-4 h-4 group-hover/exp:scale-110 transition-transform" /> {t.bulkExport}
+            <FileArchive className="w-5 h-5 group-hover/exp:scale-125 transition-transform" /> {t.bulkExport}
           </button>
         </div>
       </div>
 
-      {/* Main Grid */}
+      {/* Grid Architecture */}
       {filteredAssets.length === 0 ? (
-        <div className="py-48 text-center glass-card rounded-[4rem] border-dashed border-slate-800 bg-transparent group">
-           <ImageIcon className="w-16 h-16 text-slate-800 mx-auto mb-6 group-hover:scale-110 transition-transform group-hover:text-indigo-900" />
-           <p className="text-slate-600 font-black uppercase tracking-[0.5em] italic text-xl">{t.emptyVault}</p>
-           <p className="text-slate-800 text-[10px] uppercase font-bold mt-4 tracking-widest">{t.injectPrompt}</p>
+        <div className="py-64 text-center glass-card rounded-[5rem] border-dashed border-slate-800 bg-transparent group hover:border-indigo-500/20 transition-all duration-1000">
+           <div className="p-10 bg-slate-900/40 rounded-[3rem] w-32 h-32 flex items-center justify-center mx-auto mb-10 group-hover:scale-110 transition-transform group-hover:bg-indigo-950/30">
+              <ImageIcon className="w-12 h-12 text-slate-800 group-hover:text-indigo-600 transition-colors" />
+           </div>
+           <h4 className="text-slate-600 font-[1000] uppercase tracking-[0.6em] italic text-3xl mb-4">{t.emptyVault}</h4>
+           <p className="text-slate-800 text-[11px] uppercase font-black tracking-[0.5em]">{t.injectPrompt}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
           {filteredAssets.map((img) => (
-            <div key={img.id} className="relative group/it">
+            <div key={img.id} className="relative group/wrapper">
               {selectionMode && (
                 <div 
-                  className="absolute top-5 left-5 z-30 cursor-pointer"
+                  className="absolute top-6 left-6 z-40 cursor-pointer animate-in zoom-in duration-500"
                   onClick={() => toggleSelection(img.id)}
                 >
                   {selectedIds.has(img.id) ? (
-                    <div className="bg-indigo-600 p-2.5 rounded-xl border border-white/20 shadow-2xl shadow-indigo-600/50"><Check className="w-4 h-4 text-white" /></div>
+                    <div className="bg-indigo-600 p-3 rounded-2xl border border-white/20 shadow-[0_0_40px_-5px_rgba(79,70,229,0.8)]"><Check className="w-5 h-5 text-white" /></div>
                   ) : (
-                    <div className="bg-slate-900/90 backdrop-blur-md p-2.5 rounded-xl border border-white/10 hover:border-indigo-500/50 transition-all"><div className="w-4 h-4" /></div>
+                    <div className="bg-slate-950/90 backdrop-blur-xl p-3 rounded-2xl border border-white/10 hover:border-indigo-500/50 transition-all"><div className="w-5 h-5" /></div>
                   )}
                 </div>
               )}
-              <div className={selectionMode ? 'opacity-60 scale-95 transition-all pointer-events-none' : 'transition-all'}>
+              <div className={`transition-all duration-700 ${selectionMode ? 'opacity-40 scale-90 grayscale pointer-events-none' : 'hover:scale-[1.02]'}`}>
                 <ImageCard 
                   image={img} 
                   isViewOnly={vault.isViewOnly} 
                   onDelete={async () => {
-                    if(!confirm('Annihilate shard?')) return;
+                    if(!confirm('ANNIHILATE SHARD: This operation is irreversible.')) return;
                     const updated = vault.images.filter(i => i.id !== img.id);
                     const v = await StorageService.updateVaultImages(vault.id, updated);
                     onVaultUpdate(v);
@@ -370,27 +377,27 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                 />
               </div>
               {selectionMode && (
-                <div className="absolute inset-0 z-20 cursor-pointer" onClick={() => toggleSelection(img.id)} />
+                <div className="absolute inset-0 z-30 cursor-pointer" onClick={() => toggleSelection(img.id)} />
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Export Protocol Modal */}
+      {/* High-Impact Archival Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-950/95 backdrop-blur-3xl animate-in fade-in duration-500">
-          <div className="glass-card w-full max-w-xl p-16 rounded-[4rem] border-white/10 relative text-center shadow-[0_0_150px_-30px_rgba(99,102,241,0.3)]">
-            <button onClick={() => setShowExportModal(false)} className="absolute top-10 right-10 text-slate-500 hover:text-white transition-all"><X className="w-8 h-8" /></button>
-            <div className="w-24 h-24 bg-indigo-600 rounded-[2rem] mx-auto flex items-center justify-center mb-10 shadow-2xl shadow-indigo-600/40">
-              <FileArchive className="w-12 h-12 text-white" />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-8 bg-slate-950/98 backdrop-blur-[40px] animate-in fade-in duration-700">
+          <div className="glass-card w-full max-w-2xl p-20 rounded-[5rem] border-white/5 relative text-center shadow-[0_0_200px_-50px_rgba(99,102,241,0.4)]">
+            <button onClick={() => setShowExportModal(false)} className="absolute top-12 right-12 text-slate-600 hover:text-white transition-all"><X className="w-10 h-10" /></button>
+            <div className="w-28 h-28 bg-indigo-600 rounded-[2.5rem] mx-auto flex items-center justify-center mb-12 shadow-[0_20px_60px_-15px_rgba(79,70,229,0.5)]">
+              <FileArchive className="w-14 h-14 text-white" />
             </div>
-            <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter mb-6">{t.exportModalTitle}</h3>
-            <p className="text-slate-500 mb-12 italic leading-relaxed text-lg px-6">Archive shards into a single compiled binary ZIP stream. Select scope to proceed.</p>
+            <h3 className="text-6xl font-[1000] text-white italic uppercase tracking-tighter mb-8 leading-none">{t.exportModalTitle}</h3>
+            <p className="text-slate-500 mb-16 italic leading-relaxed text-xl px-4">Compile all distributed shard streams into a single localized binary ZIP archive.</p>
             
-            <div className="grid grid-cols-1 gap-6">
-              <ExportOptionBtn onClick={() => executeExport('all')} label={t.exportAll} sub={`${vault.images.length} Shards Identified`} color="indigo" />
-              <ExportOptionBtn onClick={() => { setShowExportModal(false); setSelectionMode(true); }} label={t.exportSelected} sub="Manual Stream Selection" color="slate" />
+            <div className="grid grid-cols-1 gap-8">
+              <ExportOptionBtn onClick={() => executeExport('all')} label={t.exportAll} sub={`${vault.images.length} Objects Ready for extraction`} color="indigo" />
+              <ExportOptionBtn onClick={() => { setShowExportModal(false); setSelectionMode(true); }} label={t.exportSelected} sub="Target Segment Selection" color="slate" />
             </div>
           </div>
         </div>
@@ -399,25 +406,32 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   );
 };
 
-const HUDCard = ({ icon, label, value, color, pulse }: any) => (
-  <div className="glass-card p-8 rounded-[2rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all">
-    <div className="flex items-center gap-4 mb-4">
-      <div className={`p-2.5 bg-slate-950 border border-white/5 rounded-xl ${color === 'cyan' ? 'text-cyan-400' : 'text-indigo-400'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`}>{icon}</div>
-      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">{label}</span>
+const HUDCard = ({ icon, label, value, color, pulse }: any) => {
+  const isCyan = color === 'cyan';
+  const isIndigo = color === 'indigo';
+
+  return (
+    <div className="glass-card p-10 rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all">
+      <div className="flex items-center gap-5 mb-6">
+        <div className={`p-3 bg-slate-950 border border-white/5 rounded-2xl ${isCyan ? 'text-cyan-400' : isIndigo ? 'text-indigo-400' : 'text-slate-500'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform group-hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]`}>
+          {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6" })}
+        </div>
+        <span className="text-[11px] font-black text-slate-600 uppercase tracking-[0.4em]">{label}</span>
+      </div>
+      <div className="text-4xl font-[1000] text-white italic tracking-tighter leading-none">{value}</div>
     </div>
-    <div className="text-3xl font-black text-white italic tracking-tighter">{value}</div>
-  </div>
-);
+  );
+};
 
 const ExportOptionBtn = ({ onClick, label, sub, color }: any) => (
   <button 
     onClick={onClick}
-    className={`flex items-center justify-between p-8 rounded-[2rem] border transition-all group active:scale-95 ${color === 'indigo' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 shadow-xl shadow-indigo-600/20' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'}`}
+    className={`flex items-center justify-between p-10 rounded-[3rem] border transition-all group active:scale-95 ${color === 'indigo' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 shadow-[0_20px_50px_-15px_rgba(79,70,229,0.3)]' : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'}`}
   >
     <div className="text-left">
-      <p className="text-xl font-black uppercase italic tracking-tight">{label}</p>
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 opacity-60">{sub}</p>
+      <p className="text-2xl font-[1000] uppercase italic tracking-tighter leading-none mb-2">{label}</p>
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50">{sub}</p>
     </div>
-    <Download className={`w-7 h-7 ${color === 'indigo' ? 'text-white' : 'text-indigo-500'} group-hover:translate-y-1 transition-transform`} />
+    <Download className={`w-8 h-8 ${color === 'indigo' ? 'text-white' : 'text-indigo-500'} group-hover:translate-y-2 transition-transform duration-500`} />
   </button>
 );
