@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { PlusCircle, Key, Lock, Image as ImageIcon, ShieldCheck, Terminal, Fingerprint, ShieldAlert, ChevronRight, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { PlusCircle, Key, ShieldCheck, Zap, Globe, HardDrive, Cpu, Activity, ChevronRight, Layers, Fingerprint, Command } from 'lucide-react';
 import { TermsModal } from './TermsModal.tsx';
 import { APP_NAME, TAGLINE } from '../constants.tsx';
 
@@ -13,78 +13,76 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onCreateClick, onAcces
   const [showTerms, setShowTerms] = useState(false);
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in duration-1000 relative">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 -left-40 w-80 h-80 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 -right-40 w-80 h-80 bg-cyan-600/10 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="max-w-4xl mb-20 space-y-8 relative z-10">
-        <div className="inline-flex items-center gap-3 px-6 py-2 bg-indigo-500/5 border border-indigo-500/20 rounded-full mb-4 animate-bounce">
-            <Zap className="w-4 h-4 text-indigo-400" />
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Protocol v2.0 Obsidian</span>
+    <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-1000 relative">
+      
+      {/* Hero Section */}
+      <div className="max-w-5xl mb-24 space-y-10 relative z-10">
+        <div className="inline-flex items-center gap-4 px-5 py-1.5 bg-indigo-500/5 border border-indigo-500/10 rounded-full mb-4 animate-in slide-in-from-top-4 duration-700">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></div>
+              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-[0.4em]">Encrypted Node Architecture v4.0</span>
+            </div>
         </div>
         
-        <h2 className="text-6xl sm:text-8xl font-black text-white mb-6 italic tracking-tighter leading-none uppercase">
-          Digital <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-white to-cyan-400 text-glow">Sovereignty</span> <br/>
-          Built in Silence
+        <h2 className="text-7xl sm:text-[10rem] font-[900] text-white leading-[0.85] tracking-tighter uppercase italic">
+          Total <span className="text-transparent bg-clip-text bg-gradient-to-b from-indigo-400 to-indigo-700 text-glow">Sovereignty</span>
         </h2>
         
-        <p className="text-slate-500 text-xl sm:text-2xl leading-relaxed max-w-3xl mx-auto italic font-medium">
-          Registration-free encryption for your most sensitive visual assets. No logs. No identity. Just pure <span className="text-white">cryptographic isolation</span>.
+        <p className="text-slate-400 text-xl sm:text-2xl leading-relaxed max-w-3xl mx-auto italic font-medium px-6">
+          The elite standard for registration-free asset encryption. <br className="hidden sm:block"/>
+          <span className="text-white/80">Infinite cloud capacity</span> sharded across global distributed nodes.
         </p>
+
+        <div className="pt-8 flex flex-wrap justify-center gap-6">
+           <button 
+            onClick={onCreateClick}
+            className="px-10 py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black italic uppercase tracking-widest shadow-2xl shadow-indigo-600/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-3"
+           >
+             Initialize Nexus <PlusCircle className="w-5 h-5" />
+           </button>
+           <button 
+            onClick={onAccessClick}
+            className="px-10 py-5 bg-slate-800/50 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded-2xl font-black italic uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-3"
+           >
+             Access Terminal <Key className="w-5 h-5 text-indigo-400" />
+           </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full max-w-5xl relative z-10">
-        <button 
+      {/* Primary Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full max-w-6xl relative z-10 px-6">
+        <ActionCard 
           onClick={onCreateClick}
-          className="group relative overflow-hidden p-12 rounded-[3.5rem] transition-all duration-500 transform text-left glass-card border-white/5 hover:border-indigo-500/40 hover:-translate-y-2 hover:shadow-[0_40px_80px_-20px_rgba(99,102,241,0.3)] bg-slate-900/40"
-        >
-          <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-[60px] group-hover:bg-indigo-500/20 transition-colors" />
-          <div className="relative z-10">
-            <div className="w-16 h-16 bg-indigo-600 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:rotate-12 transition-transform shadow-xl shadow-indigo-600/40">
-                <PlusCircle className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-4xl font-black mb-4 text-white italic uppercase tracking-tighter">Forge New Nexus</h3>
-            <p className="text-slate-500 text-lg font-medium italic mb-6">Initialize a private vault node. Deploy custom credentials and secure your first asset stream.</p>
-            <div className="flex items-center gap-2 text-indigo-400 font-black uppercase text-xs tracking-widest group-hover:gap-4 transition-all">
-                Initialize Secure Node <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
-
-        <button 
+          title="Forge Node"
+          desc="Deploy a private vault node with custom credentials. ZERO metadata logs."
+          icon={<PlusCircle className="w-8 h-8" />}
+          color="indigo"
+        />
+        <ActionCard 
           onClick={onAccessClick}
-          className="group relative overflow-hidden p-12 rounded-[3.5rem] transition-all duration-500 transform text-left glass-card border-white/5 hover:border-emerald-500/40 hover:-translate-y-2 hover:shadow-[0_40px_80px_-20px_rgba(16,185,129,0.2)] bg-slate-900/40"
-        >
-          <div className="absolute -top-10 -right-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-[60px] group-hover:bg-emerald-500/20 transition-colors" />
-          <div className="relative z-10">
-            <div className="w-16 h-16 bg-slate-800 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:-rotate-12 transition-transform shadow-xl">
-                <Key className="w-8 h-8 text-emerald-400" />
-            </div>
-            <h3 className="text-4xl font-black mb-4 text-white italic uppercase tracking-tighter">Access Terminal</h3>
-            <p className="text-slate-500 text-lg font-medium italic mb-6">Re-establish connection with an existing vault node. Verify PIN credentials to unlock your snaps.</p>
-            <div className="flex items-center gap-2 text-emerald-400 font-black uppercase text-xs tracking-widest group-hover:gap-4 transition-all">
-                Authenticate Session <ChevronRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
+          title="Authenticate"
+          desc="Establish a secure uplink to your existing vault using PIN verification."
+          icon={<Key className="w-8 h-8" />}
+          color="cyan"
+        />
       </div>
 
-      <div className="mt-32 grid grid-cols-1 sm:grid-cols-3 gap-12 w-full max-w-6xl relative z-10">
-        <Feature 
-          icon={<Fingerprint className="w-7 h-7 text-indigo-400" />} 
-          title="Ghost Identity" 
-          description="We never ask for emails or names. Your username is your only footprint."
+      {/* Feature Matrix */}
+      <div className="mt-40 grid grid-cols-1 sm:grid-cols-3 gap-12 w-full max-w-6xl px-6">
+        <FeatureItem 
+          icon={<Fingerprint className="w-6 h-6" />}
+          title="Ghost Protocol"
+          desc="Client-side encryption means we never see your data or your PIN."
         />
-        <Feature 
-          icon={<ShieldAlert className="w-7 h-7 text-cyan-400" />} 
-          title="Panic Response" 
-          description="Instant emergency lock protocols to wipe sessions during security threats."
+        <FeatureItem 
+          icon={<Layers className="w-6 h-6" />}
+          title="Shard Storage"
+          desc="Files are broken into encrypted shards distributed across redundant cloud nodes."
         />
-        <Feature 
-          icon={<ShieldCheck className="w-7 h-7 text-emerald-400" />} 
-          title="Quantum Proof" 
-          description="Images are shards across Telegram's global encrypted infrastructure."
+        <FeatureItem 
+          icon={<Command className="w-6 h-6" />}
+          title="Command Export"
+          desc="Download your entire vault as a single compiled ZIP at any time."
         />
       </div>
 
@@ -93,10 +91,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onCreateClick, onAcces
   );
 };
 
-const Feature: React.FC<{ icon: React.ReactNode, title: string, description: string }> = ({ icon, title, description }) => (
-  <div className="flex flex-col items-center text-center p-10 rounded-[2.5rem] glass-card border-white/5 bg-slate-950/40 hover:bg-slate-900/60 transition-all group">
-    <div className="mb-6 p-5 bg-slate-900 rounded-2xl group-hover:scale-110 group-hover:rotate-6 transition-all shadow-xl">{icon}</div>
-    <h4 className="text-xl font-black text-white mb-3 uppercase italic tracking-tight">{title}</h4>
-    <p className="text-sm text-slate-500 leading-relaxed font-medium italic">{description}</p>
+const ActionCard = ({ onClick, title, desc, icon, color }: any) => {
+  const colorMap: any = {
+    indigo: "from-indigo-600 to-indigo-900 border-indigo-500/20 hover:border-indigo-400/40 shadow-indigo-900/10",
+    cyan: "from-slate-800 to-slate-950 border-white/5 hover:border-cyan-500/30 shadow-black/20"
+  };
+
+  return (
+    <button 
+      onClick={onClick}
+      className={`group relative overflow-hidden p-14 rounded-[3.5rem] transition-all duration-700 text-left glass-card ${colorMap[color]} hover:-translate-y-3 flex flex-col items-start`}
+    >
+      <div className="absolute inset-0 cyber-shimmer opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div className="mb-10 p-5 bg-white/5 rounded-3xl border border-white/10 group-hover:scale-110 transition-transform shadow-inner">
+        {icon}
+      </div>
+      <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter mb-4 leading-none">{title}</h3>
+      <p className="text-slate-400 text-lg font-medium italic leading-relaxed mb-8">{desc}</p>
+      <div className={`mt-auto flex items-center gap-3 text-sm font-black uppercase tracking-[0.2em] ${color === 'indigo' ? 'text-indigo-400' : 'text-cyan-400'} group-hover:gap-6 transition-all`}>
+        Execute Handshake <ChevronRight className="w-4 h-4" />
+      </div>
+    </button>
+  );
+};
+
+const FeatureItem = ({ icon, title, desc }: any) => (
+  <div className="p-10 flex flex-col items-center text-center group">
+    <div className="w-20 h-20 rounded-[2rem] bg-slate-900/50 border border-slate-800 flex items-center justify-center text-indigo-500 mb-8 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
+      {icon}
+    </div>
+    <h4 className="text-xl font-black text-white italic uppercase tracking-tight mb-3">{title}</h4>
+    <p className="text-slate-500 text-sm italic leading-relaxed font-medium">{desc}</p>
   </div>
 );

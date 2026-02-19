@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 export const APP_NAME = "SnapSave";
-export const TAGLINE = "Save. Secure. Download.";
+export const TAGLINE = "Secure Multi-Format Asset Vault";
 export const TG_BOT_TOKEN = "8585527211:AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ";
 export const TG_CHAT_ID = "7303640347";
 
@@ -33,5 +33,10 @@ export const ICONS = {
   Brain: <Brain className="w-5 h-5" />,
 };
 
-export const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+/**
+ * Technical Constraints:
+ * Telegram Bot API has a hard 50MB limit for sendDocument via standard Bot API.
+ * This app supports images, videos, documents, and archives.
+ */
+export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 export const MAX_FAILED_ATTEMPTS = 5;

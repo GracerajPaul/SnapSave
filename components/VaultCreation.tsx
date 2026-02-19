@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Loader2, Sparkles, Clock, CheckSquare, Square } from 'lucide-react';
+import { ArrowLeft, Loader2, Sparkles, Clock, CheckSquare, Square, ShieldCheck } from 'lucide-react';
 import { ExpiryOption, Vault } from '../types.ts';
 import { StorageService } from '../services/storageService.ts';
 import { AuthService } from '../services/authService.ts';
@@ -59,15 +59,15 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
       <div className="glass-card p-8 rounded-3xl shadow-2xl">
         <div className="mb-8 text-center">
           <div className="inline-flex p-3 bg-indigo-500/10 rounded-2xl mb-4">
-            <Sparkles className="w-8 h-8 text-indigo-500" />
+            <ShieldCheck className="w-8 h-8 text-indigo-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Create Your Vault</h2>
-          <p className="text-slate-400 text-sm mt-1">Set up your secure space in seconds</p>
+          <h2 className="text-2xl font-bold text-white uppercase italic tracking-tighter">Forge Nexus Node</h2>
+          <p className="text-slate-400 text-sm mt-1">Unlimited storage, registration-free.</p>
         </div>
 
         <form onSubmit={handleCreate} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Unique Username</label>
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Node Identifier</label>
             <input 
               type="text"
               required
@@ -80,7 +80,7 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Security PIN</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Access PIN</label>
               <input 
                 type="password"
                 required
@@ -92,10 +92,10 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Vault Name (Optional)</label>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nexus Name</label>
               <input 
                 type="text"
-                placeholder="Private Pics"
+                placeholder="Private Vault"
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 text-white"
                 value={vaultName}
                 onChange={(e) => setVaultName(e.target.value)}
@@ -104,8 +104,8 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
-              <Clock className="w-4 h-4" /> Auto-Delete After
+            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+              <Clock className="w-3 h-3" /> Node Expiry Protocol
             </label>
             <div className="grid grid-cols-4 gap-2">
               {[
@@ -120,7 +120,7 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
                   onClick={() => setExpiry(opt.value)}
                   className={`py-2 px-1 text-xs rounded-lg border transition-all ${
                     expiry === opt.value 
-                    ? 'bg-indigo-600 border-indigo-500 text-white font-semibold' 
+                    ? 'bg-indigo-600 border-indigo-500 text-white font-bold' 
                     : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                   }`}
                 >
@@ -141,20 +141,20 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
                 <Square className="w-5 h-5 text-slate-600 group-hover:text-slate-400" />
               )}
             </div>
-            <p className="text-xs text-slate-400 leading-tight select-none">
-              I agree to the{' '}
+            <p className="text-[10px] text-slate-400 leading-tight select-none uppercase font-black tracking-tight">
+              I accept the protocol constraints including the 50MB individual file limit and credential recovery waiver.
               <button 
                 type="button"
-                className="text-indigo-400 hover:underline font-semibold"
+                className="text-indigo-400 hover:underline font-black ml-1"
                 onClick={(e) => { e.stopPropagation(); setShowTerms(true); }}
               >
-                Terms and Conditions
+                TERMS
               </button>
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-sm text-center">
+            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs font-bold text-center uppercase tracking-tighter">
               {error}
             </div>
           )}
@@ -162,13 +162,13 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
           <button
             type="submit"
             disabled={loading || !termsAccepted}
-            className={`w-full py-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
+            className={`w-full py-4 rounded-xl font-black text-white italic uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
               termsAccepted && !loading
               ? 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20' 
               : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Initialize Vault'}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Deploy Node'}
           </button>
         </form>
       </div>

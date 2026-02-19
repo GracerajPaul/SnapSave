@@ -2,21 +2,24 @@
 import { TG_BOT_TOKEN, TG_CHAT_ID } from '../constants.tsx';
 
 /**
- * Service to handle image interaction with Telegram.
+ * Service to handle asset interaction with Telegram.
  * SnapSave uses Telegram as an encrypted, distributed storage layer.
  */
 export const TelegramService = {
   /**
-   * Uploads a file to a Telegram chat via the Bot API.
-   * Returns metadata including the file_id.
+   * Uploads any file to a Telegram chat via the Bot API.
+   * Uses sendDocument to ensure original quality is preserved.
    */
-  async uploadImage(file: File, onProgress?: (percent: number) => void): Promise<{ file_id: string }> {
+  async uploadFile(file: File, onProgress?: (percent: number) => void): Promise<{ file_id: string }> {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('chat_id', TG_CHAT_ID);
       formData.append('document', file);
 
       const xhr = new XMLHttpRequest();
+      // Increase timeout for large video files
+      xhr.timeout = 300000; // 5 minutes
+      
       xhr.open('POST', `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument`, true);
 
       if (onProgress) {
@@ -33,20 +36,35 @@ export const TelegramService = {
           try {
             const data = JSON.parse(xhr.responseText);
             if (data.ok) {
-              const fileId = data.result.document.file_id;
-              resolve({ file_id: fileId });
+              const res = data.result;
+              // Robust file_id extraction: Telegram might categorize the result even if sent via sendDocument
+              const fileId = (
+                res.document?.file_id || 
+                res.video?.file_id || 
+                res.animation?.file_id || 
+                res.audio?.file_id || 
+                res.photo?.[res.photo.length - 1]?.file_id
+              );
+              
+              if (fileId) {
+                resolve({ file_id: fileId });
+              } else {
+                reject(new Error('Upload successful but file ID could not be extracted.'));
+              }
             } else {
-              reject(new Error(data.description || 'Telegram upload failed'));
+              reject(new Error(data.description || 'Telegram upload refused.'));
             }
           } catch (e) {
-            reject(new Error('Invalid response from Telegram server'));
+            reject(new Error('Malformed response from Telegram uplink.'));
           }
         } else {
-          reject(new Error(`HTTP Error: ${xhr.status} - ${xhr.statusText}`));
+          reject(new Error(`Uplink Error: ${xhr.status} - ${xhr.statusText}`));
         }
       };
 
-      xhr.onerror = () => reject(new Error('Network connection error during Telegram upload'));
+      xhr.ontimeout = () => reject(new Error('Uplink timed out. The file might be too large or your connection is unstable.'));
+      xhr.onerror = () => reject(new Error('Network connection interrupted during asset injection.'));
+      
       xhr.send(formData);
     });
   },
@@ -66,7 +84,7 @@ export const TelegramService = {
       }
       return '';
     } catch (error) {
-      console.error('Failed to resolve Telegram image path:', error);
+      console.error('Failed to resolve Telegram asset path:', error);
       return '';
     }
   }
