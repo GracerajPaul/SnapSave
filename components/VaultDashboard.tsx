@@ -206,10 +206,10 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   };
 
   return (
-    <div className="space-y-8 md:space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 max-w-[1600px] mx-auto">
+    <div className="space-y-6 md:space-y-16 animate-in fade-in slide-in-from-bottom-8 duration-1000 max-w-[1600px] mx-auto px-2 md:px-0">
       
-      {/* Precision HUD Grid - Responsive columns */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+      {/* Precision HUD Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
         <HUDCard icon={<Database />} label={t.storageUsed} value={`${totalSize} MB`} />
         <HUDCard icon={<Activity />} label={t.remainingCap} value="∞ Capacity" pulse color="cyan" />
         <HUDCard icon={<Clock />} label={t.sessionType} value={vault.expiry === ExpiryOption.NEVER ? 'Never' : vault.expiry} />
@@ -217,54 +217,54 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       </div>
 
       {/* Main Command Center Architecture */}
-      <div className="glass-card p-6 md:p-12 rounded-[2rem] md:rounded-[4rem] relative overflow-hidden group border-white/5">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-indigo-600/5 blur-[150px] pointer-events-none group-hover:bg-indigo-600/15 transition-all duration-1000"></div>
+      <div className="glass-card p-5 md:p-12 rounded-[1.5rem] md:rounded-[4rem] relative overflow-hidden group border-white/5">
+        <div className="absolute top-0 right-0 w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-indigo-600/5 blur-[150px] pointer-events-none group-hover:bg-indigo-600/15 transition-all duration-1000"></div>
         
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-8 md:gap-12 relative z-10">
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex items-center gap-3 md:gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 md:gap-12 relative z-10">
+          <div className="space-y-2 md:space-y-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-              <span className="text-[9px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] md:tracking-[0.5em]">Node Uplink Established</span>
+              <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.5em]">Node Uplink Established</span>
             </div>
-            <h2 className="text-4xl md:text-6xl lg:text-8xl font-[1000] text-white italic tracking-tighter uppercase leading-[0.9] md:leading-[0.85] mb-2 md:mb-4">
+            <h2 className="text-3xl md:text-6xl lg:text-8xl font-[1000] text-white italic tracking-tighter uppercase leading-[0.9] md:leading-[0.85] mb-1 md:mb-4 truncate">
               {vault.vaultName || t.dashboardTitle}
             </h2>
-            <div className="flex flex-wrap items-center gap-3 md:gap-6">
-               <div className="px-3 md:px-5 py-1.5 md:py-2 bg-slate-950/80 border border-white/10 rounded-xl md:rounded-2xl flex items-center gap-2 md:gap-3">
-                  <Terminal className="w-3 md:w-4 h-3 md:h-4 text-indigo-400" />
-                  <span className="text-[10px] md:text-sm font-mono text-white font-bold tracking-widest uppercase truncate max-w-[120px] md:max-w-none">{vault.username}</span>
+            <div className="flex flex-wrap items-center gap-2 md:gap-6">
+               <div className="px-2 md:px-5 py-1 md:py-2 bg-slate-950/80 border border-white/10 rounded-lg md:rounded-2xl flex items-center gap-2 md:gap-3 max-w-full">
+                  <Terminal className="w-3 md:w-4 h-3 md:h-4 text-indigo-400 shrink-0" />
+                  <span className="text-[9px] md:text-sm font-mono text-white font-bold tracking-widest uppercase truncate">{vault.username}</span>
                </div>
-               <span className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] md:tracking-[0.4em] italic">Cryptographic Node ID</span>
+               <span className="text-[7px] md:text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] md:tracking-[0.4em] italic">Cryptographic Node ID</span>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3 md:gap-6 items-center">
-            <div className="relative group/search w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-6 items-stretch sm:items-center">
+            <div className="relative group/search flex-1">
               <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-slate-700 group-focus-within/search:text-indigo-400 transition-colors" />
               <input 
                 type="text"
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-950/90 border border-slate-800 rounded-xl md:rounded-[2rem] pl-12 md:pl-16 pr-6 md:pr-10 py-3 md:py-5 text-sm md:text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full sm:w-[300px] md:w-[400px] text-white placeholder:text-slate-800 transition-all font-medium"
+                className="bg-slate-950/90 border border-slate-800 rounded-xl md:rounded-[2rem] pl-10 md:pl-16 pr-4 md:pr-10 py-3 md:py-5 text-xs md:text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full xl:w-[400px] text-white placeholder:text-slate-800 transition-all font-medium"
               />
             </div>
 
-            <div className="flex gap-3 w-full sm:w-auto">
+            <div className="flex gap-2 md:gap-4 h-12 md:h-auto">
               <button 
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex-1 sm:flex-none px-6 md:px-12 py-3 md:py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl md:rounded-[2rem] font-[1000] italic uppercase tracking-[0.15em] md:tracking-[0.2em] shadow-xl shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3 md:gap-4 group/inject"
+                className="flex-1 px-4 md:px-12 py-3 md:py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl md:rounded-[2rem] font-[1000] italic uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 md:gap-4 group/inject"
               >
-                {uploading ? <Loader2 className="w-5 md:w-6 h-5 md:h-6 animate-spin" /> : <Upload className="w-5 md:w-6 h-5 md:h-6 group-hover/inject:translate-y-[-2px] transition-transform" />}
-                <span className="text-xs md:text-base">{t.injectImages}</span>
+                {uploading ? <Loader2 className="w-4 md:w-6 h-4 md:h-6 animate-spin" /> : <Upload className="w-4 md:w-6 h-4 md:h-6 transition-transform" />}
+                <span className="text-[10px] md:text-base">{t.injectImages}</span>
               </button>
 
               <button 
                 onClick={() => setShowSettings(!showSettings)}
                 className={`p-3 md:p-5 rounded-xl md:rounded-[1.5rem] border transition-all ${showSettings ? 'bg-indigo-600 border-indigo-500 text-white shadow-2xl' : 'bg-slate-900/60 border-slate-800 text-slate-400'}`}
               >
-                <Settings className="w-5 md:w-6 h-5 md:h-6" />
+                <Settings className="w-4 md:w-6 h-4 md:h-6" />
               </button>
             </div>
 
@@ -273,22 +273,22 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
         </div>
       </div>
 
-      {/* Progress Bars - Responsive padding */}
+      {/* Progress Bars */}
       {(uploadStatus || zipLoading) && (
-        <div className="glass-card p-6 md:p-10 rounded-2xl md:rounded-[3rem] border-indigo-500/30 animate-in slide-in-from-top-4 duration-700 shadow-2xl bg-indigo-950/5">
-          <div className="flex justify-between items-center mb-4 md:mb-6">
-            <div className="flex items-center gap-3 md:gap-5">
-              <div className="p-2 md:p-3 bg-indigo-500/10 rounded-xl md:rounded-2xl"><Command className="w-4 md:w-6 h-4 md:h-6 text-indigo-400 animate-spin-slow" /></div>
-              <div>
-                <span className="text-sm md:text-lg font-black text-white italic tracking-tight uppercase block truncate max-w-[150px] sm:max-w-none">
+        <div className="glass-card p-4 md:p-10 rounded-xl md:rounded-[3rem] border-indigo-500/30 animate-in slide-in-from-top-4 duration-700 shadow-2xl bg-indigo-950/5">
+          <div className="flex justify-between items-center mb-3 md:mb-6">
+            <div className="flex items-center gap-3 md:gap-5 min-w-0">
+              <div className="p-2 md:p-3 bg-indigo-500/10 rounded-lg md:rounded-2xl shrink-0"><Command className="w-4 md:w-6 h-4 md:h-6 text-indigo-400 animate-spin-slow" /></div>
+              <div className="min-w-0">
+                <span className="text-xs md:text-lg font-black text-white italic tracking-tight uppercase block truncate">
                   {zipLoading ? zipStatus : `${uploadStatus?.fileName}`}
                 </span>
-                <span className="text-[8px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest">Protocol Handshake...</span>
+                <span className="text-[6px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest">Protocol Handshake...</span>
               </div>
             </div>
-            {uploadStatus && <span className="text-xl md:text-3xl font-mono font-black text-indigo-400 tracking-tighter">{uploadStatus.progress}%</span>}
+            {uploadStatus && <span className="text-sm md:text-3xl font-mono font-black text-indigo-400 tracking-tighter ml-2">{uploadStatus.progress}%</span>}
           </div>
-          <div className="w-full h-1.5 md:h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+          <div className="w-full h-1 md:h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
             <div 
               className={`h-full bg-gradient-to-r from-indigo-700 via-indigo-500 to-cyan-400 transition-all duration-300 rounded-full ${zipLoading ? 'animate-pulse' : ''}`} 
               style={{ width: zipLoading ? '100%' : `${uploadStatus?.progress}%` }} 
@@ -298,26 +298,26 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       )}
 
       {/* Stream Control Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-10 border-b border-white/5 pb-6 md:pb-10 px-2">
-        <div className="flex items-center gap-6 md:gap-10">
-          <h3 className="text-2xl md:text-4xl font-[1000] text-white italic uppercase tracking-tighter flex items-center gap-3 md:gap-5">
-            <Network className="w-6 md:w-8 h-6 md:h-8 text-indigo-500" />
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-10 border-b border-white/5 pb-4 md:pb-10">
+        <div className="flex items-center gap-4 md:gap-10">
+          <h3 className="text-lg md:text-4xl font-[1000] text-white italic uppercase tracking-tighter flex items-center gap-2 md:gap-5">
+            <Network className="w-5 md:w-8 h-5 md:h-8 text-indigo-500" />
             Shard Stream
           </h3>
           <button 
             onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}
-            className={`px-4 md:px-8 py-2 md:py-2.5 rounded-full text-[9px] md:text-[11px] font-black uppercase tracking-[0.2em] md:tracking-[0.3em] border transition-all flex items-center gap-2 md:gap-3 ${selectionMode ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl shadow-indigo-600/30' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
+            className={`px-3 md:px-8 py-1.5 md:py-2.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.3em] border transition-all flex items-center gap-1.5 md:gap-3 ${selectionMode ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
           >
-            <ListFilter className="w-4 md:w-5 h-4 md:h-5" />
-            <span className="hidden xs:inline">{t.selectionMode}</span>
+            <ListFilter className="w-3 md:w-5 h-3 md:h-5" />
+            {t.selectionMode}
           </button>
         </div>
 
-        <div className="flex items-center gap-4 md:gap-8 w-full md:w-auto">
+        <div className="flex items-center gap-3 md:gap-8 w-full md:w-auto">
           {selectionMode && selectedIds.size > 0 && (
             <button 
               onClick={() => executeExport('selected')}
-              className="flex-1 md:flex-none px-6 md:px-10 py-2.5 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl text-[10px] md:text-[11px] font-[1000] uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all flex items-center justify-center gap-3 md:gap-4 shadow-xl shadow-emerald-600/20 active:scale-95"
+              className="flex-1 md:flex-none px-4 md:px-10 py-2 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg md:rounded-2xl text-[8px] md:text-[11px] font-[1000] uppercase tracking-[0.1em] md:tracking-[0.3em] transition-all flex items-center justify-center gap-2 md:gap-4 shadow-xl active:scale-95"
             >
               Extract ({selectedIds.size})
             </button>
@@ -325,36 +325,36 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           <button 
             onClick={() => setShowExportModal(true)} 
             disabled={zipLoading || vault.images.length === 0} 
-            className="flex-1 md:flex-none justify-center md:justify-start text-xs font-[1000] uppercase tracking-[0.2em] md:tracking-[0.4em] text-slate-600 hover:text-indigo-400 transition-all flex items-center gap-3 md:gap-4 group/exp active:scale-95"
+            className="flex-1 md:flex-none px-4 py-2 justify-center md:justify-start text-[8px] md:text-xs font-[1000] uppercase tracking-[0.2em] md:tracking-[0.4em] text-slate-600 hover:text-indigo-400 transition-all flex items-center gap-2 md:gap-4 group/exp active:scale-95 disabled:opacity-30"
           >
-            <FileArchive className="w-4 md:w-5 h-4 md:h-5 group-hover/exp:scale-125 transition-transform" /> 
-            <span className="xs:inline">{t.bulkExport}</span>
+            <FileArchive className="w-3 md:w-5 h-3 md:h-5 transition-transform" /> 
+            {t.bulkExport}
           </button>
         </div>
       </div>
 
-      {/* Grid Architecture - Responsive Image Grid */}
+      {/* Responsive Grid */}
       {filteredAssets.length === 0 ? (
-        <div className="py-32 md:py-64 text-center glass-card rounded-[3rem] md:rounded-[5rem] border-dashed border-slate-800 bg-transparent group hover:border-indigo-500/20 transition-all duration-1000 mx-2">
-           <div className="p-6 md:p-10 bg-slate-900/40 rounded-2xl md:rounded-[3rem] w-20 md:w-32 h-20 md:h-32 flex items-center justify-center mx-auto mb-6 md:mb-10 group-hover:scale-110 transition-transform group-hover:bg-indigo-950/30">
-              <ImageIcon className="w-8 md:w-12 h-8 md:h-12 text-slate-800 group-hover:text-indigo-600" />
+        <div className="py-16 md:py-64 text-center glass-card rounded-[1.5rem] md:rounded-[5rem] border-dashed border-slate-800 bg-transparent group hover:border-indigo-500/20 transition-all duration-1000">
+           <div className="p-5 md:p-10 bg-slate-900/40 rounded-xl md:rounded-[3rem] w-16 md:w-32 h-16 md:h-32 flex items-center justify-center mx-auto mb-4 md:mb-10 transition-transform group-hover:bg-indigo-950/30">
+              <ImageIcon className="w-6 md:w-12 h-6 md:h-12 text-slate-800 group-hover:text-indigo-600" />
            </div>
-           <h4 className="text-xl md:text-3xl font-[1000] text-slate-600 uppercase tracking-[0.4em] md:tracking-[0.6em] italic mb-2 md:mb-4">{t.emptyVault}</h4>
-           <p className="text-slate-800 text-[9px] md:text-[11px] uppercase font-black tracking-[0.3em] md:tracking-[0.5em]">{t.injectPrompt}</p>
+           <h4 className="text-lg md:text-3xl font-[1000] text-slate-600 uppercase tracking-[0.3em] md:tracking-[0.6em] italic mb-1 md:mb-4">{t.emptyVault}</h4>
+           <p className="text-slate-800 text-[7px] md:text-[11px] uppercase font-black tracking-[0.2em] md:tracking-[0.5em]">{t.injectPrompt}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-12 px-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-12">
           {filteredAssets.map((img) => (
             <div key={img.id} className="relative group/wrapper">
               {selectionMode && (
                 <div 
-                  className="absolute top-4 md:top-6 left-4 md:left-6 z-40 cursor-pointer animate-in zoom-in duration-500"
+                  className="absolute top-3 md:top-6 left-3 md:left-6 z-40 cursor-pointer animate-in zoom-in duration-500"
                   onClick={() => toggleSelection(img.id)}
                 >
                   {selectedIds.has(img.id) ? (
-                    <div className="bg-indigo-600 p-2.5 md:p-3 rounded-xl md:rounded-2xl border border-white/20 shadow-xl"><Check className="w-4 md:w-5 h-4 md:h-5 text-white" /></div>
+                    <div className="bg-indigo-600 p-2 md:p-3 rounded-lg md:rounded-2xl border border-white/20 shadow-xl"><Check className="w-3 md:w-5 h-3 md:h-5 text-white" /></div>
                   ) : (
-                    <div className="bg-slate-950/90 backdrop-blur-xl p-2.5 md:p-3 rounded-xl md:rounded-2xl border border-white/10 hover:border-indigo-500/50 transition-all"><div className="w-4 md:w-5 h-4 md:h-5" /></div>
+                    <div className="bg-slate-950/90 backdrop-blur-xl p-2 md:p-3 rounded-lg md:rounded-2xl border border-white/10 hover:border-indigo-500/50 transition-all"><div className="w-3 md:w-5 h-3 md:h-5" /></div>
                   )}
                 </div>
               )}
@@ -378,18 +378,18 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
         </div>
       )}
 
-      {/* High-Impact Archival Modal - Responsive sizing */}
+      {/* Export Modal */}
       {showExportModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 bg-slate-950/98 backdrop-blur-[20px] md:backdrop-blur-[40px] animate-in fade-in duration-700">
-          <div className="glass-card w-full max-w-2xl p-8 md:p-20 rounded-[2.5rem] md:rounded-[5rem] border-white/5 relative text-center shadow-[0_0_200px_-50px_rgba(99,102,241,0.4)]">
-            <button onClick={() => setShowExportModal(false)} className="absolute top-6 md:top-12 right-6 md:right-12 text-slate-600 hover:text-white transition-all"><X className="w-8 md:w-10 h-8 md:h-10" /></button>
-            <div className="w-20 md:w-28 h-20 md:h-28 bg-indigo-600 rounded-2xl md:rounded-[2.5rem] mx-auto flex items-center justify-center mb-8 md:mb-12 shadow-2xl">
-              <FileArchive className="w-10 md:w-14 h-10 md:h-14 text-white" />
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/98 backdrop-blur-[15px] md:backdrop-blur-[40px] animate-in fade-in duration-700">
+          <div className="glass-card w-full max-w-2xl p-6 md:p-20 rounded-[2rem] md:rounded-[5rem] border-white/5 relative text-center shadow-[0_0_200px_-50px_rgba(99,102,241,0.4)]">
+            <button onClick={() => setShowExportModal(false)} className="absolute top-5 md:top-12 right-5 md:right-12 text-slate-600 hover:text-white transition-all"><X className="w-6 md:w-10 h-6 md:h-10" /></button>
+            <div className="w-16 md:w-28 h-16 md:h-28 bg-indigo-600 rounded-xl md:rounded-[2.5rem] mx-auto flex items-center justify-center mb-6 md:mb-12 shadow-2xl">
+              <FileArchive className="w-8 md:w-14 h-8 md:h-14 text-white" />
             </div>
-            <h3 className="text-4xl md:text-6xl font-[1000] text-white italic uppercase tracking-tighter mb-4 md:mb-8 leading-none">{t.exportModalTitle}</h3>
-            <p className="text-slate-500 mb-10 md:mb-16 italic leading-relaxed text-base md:text-xl px-2">Compile distributed shard streams into localized binary ZIP archive.</p>
+            <h3 className="text-2xl md:text-6xl font-[1000] text-white italic uppercase tracking-tighter mb-3 md:mb-8 leading-none">{t.exportModalTitle}</h3>
+            <p className="text-slate-500 mb-8 md:mb-16 italic leading-relaxed text-sm md:text-xl px-2">Compile distributed shard streams into localized binary ZIP archive.</p>
             
-            <div className="grid grid-cols-1 gap-4 md:gap-8">
+            <div className="grid grid-cols-1 gap-3 md:gap-8">
               <ExportOptionBtn onClick={() => executeExport('all')} label={t.exportAll} sub={`${vault.images.length} Objects Ready`} color="indigo" />
               <ExportOptionBtn onClick={() => { setShowExportModal(false); setSelectionMode(true); }} label={t.exportSelected} sub="Manual Stream Selection" color="slate" />
             </div>
@@ -405,14 +405,14 @@ const HUDCard = ({ icon, label, value, color, pulse }: any) => {
   const isIndigo = color === 'indigo';
 
   return (
-    <div className="glass-card p-4 md:p-10 rounded-2xl md:rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all flex flex-col justify-between">
-      <div className="flex items-center gap-3 md:gap-5 mb-4 md:mb-6">
-        <div className={`p-2 md:p-3 bg-slate-950 border border-white/5 rounded-xl md:rounded-2xl ${isCyan ? 'text-cyan-400' : isIndigo ? 'text-indigo-400' : 'text-slate-500'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`}>
-          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 md:w-6 h-4 md:h-6" }) : icon}
+    <div className="glass-card p-3 md:p-10 rounded-xl md:rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[80px] md:min-h-[180px]">
+      <div className="flex items-center gap-2 md:gap-5 mb-2 md:mb-6">
+        <div className={`p-1.5 md:p-3 bg-slate-950 border border-white/5 rounded-lg md:rounded-2xl ${isCyan ? 'text-cyan-400' : isIndigo ? 'text-indigo-400' : 'text-slate-500'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform shrink-0`}>
+          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: "w-3 md:w-6 h-3 md:h-6" }) : icon}
         </div>
-        <span className="text-[8px] md:text-[11px] font-black text-slate-600 uppercase tracking-[0.2em] md:tracking-[0.4em] truncate">{label}</span>
+        <span className="text-[6px] md:text-[11px] font-black text-slate-600 uppercase tracking-[0.1em] md:tracking-[0.4em] truncate">{label}</span>
       </div>
-      <div className="text-xl md:text-4xl font-[1000] text-white italic tracking-tighter leading-none truncate">{value}</div>
+      <div className="text-sm md:text-4xl font-[1000] text-white italic tracking-tighter leading-none truncate">{value}</div>
     </div>
   );
 };
@@ -420,12 +420,12 @@ const HUDCard = ({ icon, label, value, color, pulse }: any) => {
 const ExportOptionBtn = ({ onClick, label, sub, color }: any) => (
   <button 
     onClick={onClick}
-    className={`flex items-center justify-between p-6 md:p-10 rounded-2xl md:rounded-[3rem] border transition-all group active:scale-95 ${color === 'indigo' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'}`}
+    className={`flex items-center justify-between p-4 md:p-10 rounded-xl md:rounded-[3rem] border transition-all group active:scale-95 ${color === 'indigo' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'}`}
   >
     <div className="text-left">
-      <p className="text-lg md:text-2xl font-[1000] uppercase italic tracking-tighter leading-none mb-1 md:mb-2">{label}</p>
-      <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] opacity-50 truncate max-w-[150px]">{sub}</p>
+      <p className="text-sm md:text-2xl font-[1000] uppercase italic tracking-tighter leading-none mb-1 md:mb-2">{label}</p>
+      <p className="text-[6px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] opacity-50 truncate max-w-[120px] md:max-w-none">{sub}</p>
     </div>
-    <Download className={`w-6 md:w-8 h-6 md:h-8 ${color === 'indigo' ? 'text-white' : 'text-indigo-500'} group-hover:translate-y-2 transition-transform duration-500`} />
+    <Download className={`w-4 md:w-8 h-4 md:h-8 ${color === 'indigo' ? 'text-white' : 'text-indigo-500'} group-hover:translate-y-1 transition-transform`} />
   </button>
 );
