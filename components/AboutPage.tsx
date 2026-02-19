@@ -181,7 +181,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
                                 { icon: <Youtube />, url: "https://youtube.com/@gracerajpaul", color: "hover:bg-red-600 shadow-red-600/20" }
                             ].map((soc, i) => (
                                 <a key={i} href={soc.url} target="_blank" className={`p-6 bg-white/5 border border-white/10 rounded-[1.5rem] text-white transition-all hover:-translate-y-2 hover:shadow-xl ${soc.color}`}>
-                                    {isValidElement(soc.icon) ? cloneElement(soc.icon as React.ReactElement<any>, { className: "w-6 h-6" }) : soc.icon}
+                                    {isValidElement(soc.icon) ? cloneElement(soc.icon as React.ReactElement<{ className?: string }>, { className: "w-6 h-6" }) : soc.icon}
                                 </a>
                             ))}
                         </div>
@@ -237,10 +237,10 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
         {coreTalents.map((t, i) => (
           <div key={i} className="p-14 bg-slate-950/50 border border-slate-800/40 rounded-[4rem] hover:bg-slate-900 transition-all group border-b-[8px] hover:border-b-indigo-500 relative overflow-hidden shadow-2xl">
             <div className="absolute -top-10 -right-10 p-20 opacity-[0.02] text-white pointer-events-none">
-                {t.icon}
+                {isValidElement(t.icon) ? cloneElement(t.icon as React.ReactElement<{ className?: string }>, { className: "w-8 h-8" }) : t.icon}
             </div>
             <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center text-indigo-400 mb-10 group-hover:scale-110 group-hover:text-white group-hover:bg-indigo-600 transition-all shadow-2xl">
-              {isValidElement(t.icon) ? cloneElement(t.icon as React.ReactElement<any>, { className: "w-8 h-8" }) : t.icon}
+              {isValidElement(t.icon) ? cloneElement(t.icon as React.ReactElement<{ className?: string }>, { className: "w-8 h-8" }) : t.icon}
             </div>
             <h5 className="text-3xl font-black text-white mb-6 tracking-tight uppercase italic">{t.title}</h5>
             <p className="text-slate-500 text-lg leading-relaxed font-medium italic">{t.desc}</p>

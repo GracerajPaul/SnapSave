@@ -123,7 +123,7 @@ const ActionCard = ({ onClick, title, sub, desc, icon, color }: any) => {
 const FeatureItem = ({ icon, title, desc }: any) => (
   <div className="flex flex-col items-center text-center sm:items-start sm:text-left group">
     <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-center text-indigo-500 mb-6 md:mb-8 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
-      {React.cloneElement(icon as React.ReactElement, { className: "w-6 h-6 md:w-8 md:h-8" })}
+      {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-6 h-6 md:w-8 md:h-8" }) : icon}
     </div>
     <h4 className="text-xl md:text-2xl font-black text-white italic uppercase tracking-tighter mb-2 md:mb-4">{title}</h4>
     <p className="text-slate-500 text-sm md:text-lg italic leading-relaxed font-medium">{desc}</p>

@@ -408,7 +408,7 @@ const HUDCard = ({ icon, label, value, color, pulse }: any) => {
     <div className="glass-card p-4 md:p-10 rounded-2xl md:rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all flex flex-col justify-between">
       <div className="flex items-center gap-3 md:gap-5 mb-4 md:mb-6">
         <div className={`p-2 md:p-3 bg-slate-950 border border-white/5 rounded-xl md:rounded-2xl ${isCyan ? 'text-cyan-400' : isIndigo ? 'text-indigo-400' : 'text-slate-500'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`}>
-          {React.cloneElement(icon as React.ReactElement, { className: "w-4 md:w-6 h-4 md:h-6" })}
+          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-4 md:w-6 h-4 md:h-6" }) : icon}
         </div>
         <span className="text-[8px] md:text-[11px] font-black text-slate-600 uppercase tracking-[0.2em] md:tracking-[0.4em] truncate">{label}</span>
       </div>
