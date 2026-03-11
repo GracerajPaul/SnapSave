@@ -28,7 +28,7 @@ export const StorageService = {
   }): Promise<Vault> {
     if (!supabase) throw new Error('Database connection not initialized. Check environment variables.');
     
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .insert([
         {
@@ -55,7 +55,7 @@ export const StorageService = {
 
   async getVaultByUsername(username: string): Promise<Vault | null> {
     if (!supabase) return null;
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .select('*')
       .eq('username', username)
@@ -67,7 +67,7 @@ export const StorageService = {
 
   async getVaultById(id: string): Promise<Vault | null> {
     if (!supabase) return null;
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .select('*')
       .eq('id', id)
@@ -79,7 +79,7 @@ export const StorageService = {
 
   async updateVaultImages(id: string, images: VaultImage[]): Promise<Vault> {
     if (!supabase) throw new Error('Database connection not initialized');
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .update({ images })
       .eq('id', id)
@@ -99,7 +99,7 @@ export const StorageService = {
     if (updates.isViewOnly !== undefined) dbUpdates.is_view_only = updates.isViewOnly;
     if (updates.failedAttempts !== undefined) dbUpdates.failed_attempts = updates.failedAttempts;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .update(dbUpdates)
       .eq('id', id)
@@ -111,13 +111,14 @@ export const StorageService = {
   },
 
   async incrementFailedAttempts(id: string): Promise<number> {
+    if (!supabase) return 0;
     const vault = await this.getVaultById(id);
     if (!vault) return 0;
 
     const newAttempts = vault.failedAttempts + 1;
     const isLocked = newAttempts >= 5;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabase!
       .from('vaults')
       .update({ 
         failed_attempts: newAttempts,
@@ -133,7 +134,7 @@ export const StorageService = {
 
   async resetFailedAttempts(id: string) {
     if (!supabase) return;
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('vaults')
       .update({ failed_attempts: 0 })
       .eq('id', id);
@@ -143,7 +144,7 @@ export const StorageService = {
 
   async deleteVault(id: string) {
     if (!supabase) return;
-    const { error } = await supabase
+    const { error } = await supabase!
       .from('vaults')
       .delete()
       .eq('id', id);
