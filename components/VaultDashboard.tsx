@@ -164,6 +164,18 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
 
         try {
           const tgResult = await TelegramService.uploadFile(file, (progress) => {
+            // Throttle updates to every 500ms or 5% progress change to keep UI smooth
+            const now = Date.now();
+            const lastUpdate = (window as any)._lastUploadUpdate || 0;
+            const lastProgress = (window as any)._lastUploadProgress || 0;
+            
+            if (now - lastUpdate < 500 && Math.abs(progress - lastProgress) < 5 && progress < 100) {
+              return;
+            }
+            
+            (window as any)._lastUploadUpdate = now;
+            (window as any)._lastUploadProgress = progress;
+
             const currentFileUploadedBytes = (progress / 100) * file.size;
             const currentTotalUploaded = uploadedBytesTotal + currentFileUploadedBytes;
             const overallProgress = Math.round((currentTotalUploaded / totalBytes) * 100);

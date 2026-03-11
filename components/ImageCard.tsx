@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Download, Trash2, Check, Copy, Loader2, 
   File, Image as ImageIcon, Maximize2, X, FileText,
@@ -22,11 +22,34 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
   const [transforming, setTransforming] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
   const [isCinemaMode, setIsCinemaMode] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   
   const mimeType = image.mimeType.toLowerCase();
   const isImage = mimeType.startsWith('image/');
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
     const hydrateAsset = async () => {
       const isLocalBlob = displayUrl.startsWith('blob:');
       if (isLocalBlob) {
@@ -45,7 +68,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
     };
 
     hydrateAsset();
-  }, [image.telegramFileId]);
+  }, [isVisible, image.telegramFileId]);
 
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -152,7 +175,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
         <img 
           src={displayUrl || 'https://via.placeholder.com/400?text=Stream+Interrupted'} 
           alt={image.name} 
-          className="w-full h-full object-cover transition-all duration-[2000ms] ease-out group-hover:scale-110"
+          onLoad={() => setIsLoaded(true)}
+          className={`w-full h-full object-cover transition-all duration-[2000ms] ease-out group-hover:scale-110 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       );
     }
@@ -168,7 +192,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
 
   return (
     <>
-      <div className="group relative glass-card rounded-[3rem] overflow-hidden border-white/5 bg-slate-950/40 hover:shadow-[0_40px_80px_-25px_rgba(0,0,0,0.8)] transition-all duration-700 animate-in fade-in zoom-in-95 tilt-3d">
+      <div ref={cardRef} className="group relative glass-card rounded-[3rem] overflow-hidden border-white/5 bg-slate-950/40 hover:shadow-[0_40px_80px_-25px_rgba(0,0,0,0.8)] transition-all duration-700 animate-in fade-in zoom-in-95 tilt-3d">
         <div className="aspect-square w-full overflow-hidden bg-slate-950 relative flex items-center justify-center cursor-pointer transform-gpu group-hover:translate-z-10">
           {renderPreview()}
           

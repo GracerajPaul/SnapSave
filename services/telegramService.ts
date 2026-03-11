@@ -1,4 +1,6 @@
 
+const urlCache = new Map<string, string>();
+
 /**
  * Service to handle asset interaction with Telegram.
  * SnapSave uses Telegram as an encrypted, distributed storage layer.
@@ -68,6 +70,8 @@ export const TelegramService = {
    */
   async getImageUrl(fileId: string): Promise<string> {
     if (!fileId) return '';
+    if (urlCache.has(fileId)) return urlCache.get(fileId)!;
+    
     try {
       const url = `/api/vault/shard-info/${encodeURIComponent(fileId)}`;
       const response = await fetch(url);
@@ -82,7 +86,9 @@ export const TelegramService = {
       
       if (data.ok) {
         const filePath = data.result.file_path;
-        return `/api/vault/shard-download?filePath=${encodeURIComponent(filePath)}`;
+        const downloadUrl = `/api/vault/shard-download?filePath=${encodeURIComponent(filePath)}`;
+        urlCache.set(fileId, downloadUrl);
+        return downloadUrl;
       }
       return '';
     } catch (error) {
