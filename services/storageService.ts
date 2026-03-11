@@ -5,11 +5,14 @@ import { Vault, ExpiryOption, VaultImage } from '../types.ts';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn("WARNING: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing from environment variables.");
-}
+// Initialize Supabase only if keys are present to prevent crash
+const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) 
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
 
-const supabase = createClient(SUPABASE_URL || '', SUPABASE_ANON_KEY || '');
+if (!supabase) {
+  console.error("CRITICAL: Supabase environment variables are missing. The vault will not function.");
+}
 
 /**
  * StorageService 2.0 - Powered by Supabase
@@ -23,6 +26,8 @@ export const StorageService = {
     pinHash: string;
     expiry: ExpiryOption;
   }): Promise<Vault> {
+    if (!supabase) throw new Error('Database connection not initialized. Check environment variables.');
+    
     const { data, error } = await supabase
       .from('vaults')
       .insert([
@@ -49,6 +54,7 @@ export const StorageService = {
   },
 
   async getVaultByUsername(username: string): Promise<Vault | null> {
+    if (!supabase) return null;
     const { data, error } = await supabase
       .from('vaults')
       .select('*')
@@ -60,6 +66,7 @@ export const StorageService = {
   },
 
   async getVaultById(id: string): Promise<Vault | null> {
+    if (!supabase) return null;
     const { data, error } = await supabase
       .from('vaults')
       .select('*')
@@ -71,6 +78,7 @@ export const StorageService = {
   },
 
   async updateVaultImages(id: string, images: VaultImage[]): Promise<Vault> {
+    if (!supabase) throw new Error('Database connection not initialized');
     const { data, error } = await supabase
       .from('vaults')
       .update({ images })
@@ -83,6 +91,7 @@ export const StorageService = {
   },
 
   async updateVaultSettings(id: string, updates: Partial<Vault>): Promise<Vault> {
+    if (!supabase) throw new Error('Database connection not initialized');
     // Map camelCase to snake_case for Supabase
     const dbUpdates: any = {};
     if (updates.vaultName !== undefined) dbUpdates.vault_name = updates.vaultName;
@@ -123,6 +132,7 @@ export const StorageService = {
   },
 
   async resetFailedAttempts(id: string) {
+    if (!supabase) return;
     const { error } = await supabase
       .from('vaults')
       .update({ failed_attempts: 0 })
@@ -132,6 +142,7 @@ export const StorageService = {
   },
 
   async deleteVault(id: string) {
+    if (!supabase) return;
     const { error } = await supabase
       .from('vaults')
       .delete()
