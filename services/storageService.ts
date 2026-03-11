@@ -20,13 +20,23 @@ if (!supabase) {
  */
 export const StorageService = {
   
+  _checkConnection() {
+    if (!supabase) {
+      throw new Error('Supabase connection not initialized. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to the Settings > Secrets menu in AI Studio.');
+    }
+  },
+
+  isConnected() {
+    return !!supabase;
+  },
+
   async createVault(params: {
     username: string;
     vaultName: string;
     pinHash: string;
     expiry: ExpiryOption;
   }): Promise<Vault> {
-    if (!supabase) throw new Error('Database connection not initialized. Check environment variables.');
+    this._checkConnection();
     
     const { data, error } = await supabase!
       .from('vaults')
@@ -78,7 +88,7 @@ export const StorageService = {
   },
 
   async updateVaultImages(id: string, images: VaultImage[]): Promise<Vault> {
-    if (!supabase) throw new Error('Database connection not initialized');
+    this._checkConnection();
     const { data, error } = await supabase!
       .from('vaults')
       .update({ images })
@@ -91,7 +101,7 @@ export const StorageService = {
   },
 
   async updateVaultSettings(id: string, updates: Partial<Vault>): Promise<Vault> {
-    if (!supabase) throw new Error('Database connection not initialized');
+    this._checkConnection();
     // Map camelCase to snake_case for Supabase
     const dbUpdates: any = {};
     if (updates.vaultName !== undefined) dbUpdates.vault_name = updates.vaultName;
