@@ -2,20 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Download, Trash2, Check, Copy, Loader2, 
-  File, Image as ImageIcon, Maximize2, X, FileText 
+  File, Image as ImageIcon, Maximize2, X, FileText,
+  Square
 } from 'lucide-react';
 import { VaultImage } from '../types.ts';
 import { TelegramService } from '../services/telegramService.ts';
+import { StorageService } from '../services/storageService.ts';
 
 interface ImageCardProps {
   image: VaultImage;
   isViewOnly: boolean;
   onDelete: () => void;
+  onUpdate: (updatedImage: VaultImage) => void;
 }
 
-export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelete }) => {
+export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelete, onUpdate }) => {
   const [displayUrl, setDisplayUrl] = useState<string>(image.url);
   const [resolving, setResolving] = useState<boolean>(false);
+  const [transforming, setTransforming] = useState<boolean>(false);
   const [copied, setCopied] = useState(false);
   const [isCinemaMode, setIsCinemaMode] = useState(false);
   
@@ -71,6 +75,66 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSquareCrop = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isViewOnly || !displayUrl || !isImage || transforming) return;
+
+    setTransforming(true);
+    try {
+      // 1. Load image into an HTMLImageElement
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      // Use proxy if it's a cloud URL
+      const loadUrl = displayUrl.startsWith('blob:') ? displayUrl : displayUrl;
+      img.src = loadUrl;
+
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      // 2. Create a square canvas
+      const size = Math.min(img.width, img.height);
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // 3. Draw center-cropped image
+      const offsetX = (img.width - size) / 2;
+      const offsetY = (img.height - size) / 2;
+      ctx.drawImage(img, offsetX, offsetY, size, size, 0, 0, size, size);
+
+      // 4. Convert to Blob
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('Could not generate blob');
+
+      // 5. Upload to Telegram
+      const file = new (window as any).File([blob], `square_${image.name.split('.')[0]}.png`, { type: 'image/png' });
+      const tgResult = await TelegramService.uploadFile(file);
+
+      // 6. Update Image Object
+      const updatedImage: VaultImage = {
+        ...image,
+        name: file.name,
+        size: file.size,
+        mimeType: file.type,
+        telegramFileId: tgResult.file_id,
+        url: URL.createObjectURL(blob)
+      };
+
+      onUpdate(updatedImage);
+      setDisplayUrl(updatedImage.url);
+    } catch (err) {
+      console.error('Square crop failed:', err);
+      alert('TRANSFORMATION FAILED: Could not normalize asset geometry.');
+    } finally {
+      setTransforming(false);
+    }
+  };
+
   const renderPreview = () => {
     if (resolving) {
       return (
@@ -104,8 +168,8 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
 
   return (
     <>
-      <div className="group relative glass-card rounded-[3rem] overflow-hidden border-white/5 bg-slate-950/40 hover:shadow-[0_40px_80px_-25px_rgba(0,0,0,0.8)] transition-all duration-700 animate-in fade-in zoom-in-95">
-        <div className="aspect-square w-full overflow-hidden bg-slate-950 relative flex items-center justify-center cursor-pointer">
+      <div className="group relative glass-card rounded-[3rem] overflow-hidden border-white/5 bg-slate-950/40 hover:shadow-[0_40px_80px_-25px_rgba(0,0,0,0.8)] transition-all duration-700 animate-in fade-in zoom-in-95 tilt-3d">
+        <div className="aspect-square w-full overflow-hidden bg-slate-950 relative flex items-center justify-center cursor-pointer transform-gpu group-hover:translate-z-10">
           {renderPreview()}
           
           {/* Advanced Interaction Overlay */}
@@ -115,6 +179,16 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
                 {!isViewOnly && (
                   <button onClick={handleDownload} className="p-5 bg-white/10 hover:bg-indigo-600 text-white rounded-[1.5rem] backdrop-blur-2xl border border-white/10 transition-all hover:scale-110 active:scale-95 shadow-2xl">
                     <Download className="w-6 h-6" />
+                  </button>
+                )}
+                {!isViewOnly && (
+                  <button 
+                    onClick={handleSquareCrop} 
+                    disabled={transforming}
+                    className="p-5 bg-white/10 hover:bg-indigo-600 text-white rounded-[1.5rem] backdrop-blur-2xl border border-white/10 transition-all hover:scale-110 active:scale-95 shadow-2xl disabled:opacity-50"
+                    title="Normalize to Square"
+                  >
+                    {transforming ? <Loader2 className="w-6 h-6 animate-spin" /> : <Square className="w-6 h-6" />}
                   </button>
                 )}
                 <button onClick={handleCopy} className="p-5 bg-white/10 hover:bg-indigo-600 text-white rounded-[1.5rem] backdrop-blur-2xl border border-white/10 transition-all hover:scale-110 active:scale-95 shadow-2xl">

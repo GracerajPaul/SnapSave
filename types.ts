@@ -34,3 +34,19 @@ export interface AppState {
   isAuthenticated: boolean;
   isLocked: boolean;
 }
+
+export const isVaultExpired = (vault: Vault): boolean => {
+  if (vault.expiry === ExpiryOption.NEVER) return false;
+  
+  const now = Date.now();
+  const created = vault.createdAt;
+  let duration = 0;
+  
+  switch (vault.expiry) {
+    case ExpiryOption.ONE_DAY: duration = 24 * 60 * 60 * 1000; break;
+    case ExpiryOption.SEVEN_DAYS: duration = 7 * 24 * 60 * 60 * 1000; break;
+    case ExpiryOption.THIRTY_DAYS: duration = 30 * 24 * 60 * 60 * 1000; break;
+  }
+  
+  return now > (created + duration);
+};

@@ -2,10 +2,14 @@
 import { createClient } from '@supabase/supabase-js';
 import { Vault, ExpiryOption, VaultImage } from '../types.ts';
 
-const SUPABASE_URL = 'https://pamzmgeqpmjbwunamdyn.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbXptZ2VxcG1qYnd1bmFtZHluIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE0MzMyNjcsImV4cCI6MjA4NzAwOTI2N30.ai-q6zWAI_mz9P9ZKFtG2jbx0w-Ig3Gy9YFKu7wn4JI';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn("WARNING: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing from environment variables.");
+}
+
+const supabase = createClient(SUPABASE_URL || '', SUPABASE_ANON_KEY || '');
 
 /**
  * StorageService 2.0 - Powered by Supabase

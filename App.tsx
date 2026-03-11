@@ -6,7 +6,7 @@ import { VaultCreation } from './components/VaultCreation.tsx';
 import { VaultAccess } from './components/VaultAccess.tsx';
 import { VaultDashboard } from './components/VaultDashboard.tsx';
 import { AboutPage } from './components/AboutPage.tsx';
-import { Vault } from './types.ts';
+import { Vault, isVaultExpired } from './types.ts';
 import { StorageService } from './services/storageService.ts';
 
 const SESSION_KEY = 'snapsave_active_session';
@@ -20,7 +20,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       // 1. Check URL for direct vault access via hash
-      const urlParams = new URLSearchParams(window.location.hash.split('?')[1]);
+      const hash = window.location.hash;
+      const urlParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
       const vaultIdFromUrl = urlParams.get('vaultId');
       
       // 2. Check LocalStorage for an active session
@@ -31,7 +32,7 @@ const App: React.FC = () => {
       } else if (savedVaultId) {
         try {
           const vault = await StorageService.getVaultById(savedVaultId);
-          if (vault && !vault.isEmergencyLocked) {
+          if (vault && !vault.isEmergencyLocked && !isVaultExpired(vault)) {
             setActiveVault(vault);
             setView('dashboard');
           } else {
@@ -82,6 +83,7 @@ const App: React.FC = () => {
       onAboutClick={() => setView('about')}
       onHomeClick={() => setView('landing')}
     >
+      <div className="atmosphere" />
       {view === 'landing' && (
         <LandingPage 
           onCreateClick={() => setView('create')} 

@@ -99,15 +99,15 @@ const ActionCard = ({ onClick, title, sub, desc, icon, color }: any) => {
   return (
     <button 
       onClick={onClick}
-      className={`group relative overflow-hidden p-6 md:p-16 rounded-[2rem] md:rounded-[4rem] transition-all duration-700 text-left glass-card flex flex-col items-start min-h-[280px] md:min-h-[500px] border-white/5 ${isIndigo ? 'hover:border-indigo-500/50' : 'hover:border-white/20'}`}
+      className={`group relative overflow-hidden p-6 md:p-16 rounded-[2rem] md:rounded-[4rem] transition-all duration-700 text-left glass-card flex flex-col items-start min-h-[280px] md:min-h-[500px] border-white/5 tilt-3d ${isIndigo ? 'hover:border-indigo-500/50' : 'hover:border-white/20'}`}
     >
       <div className="absolute inset-0 cyber-shimmer opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
       
-      <div className="mb-6 md:mb-12 p-3 md:p-6 bg-slate-900/50 rounded-xl md:rounded-[2rem] border border-white/5 group-hover:scale-110 group-hover:bg-indigo-600 transition-all shadow-2xl group-hover:text-white text-indigo-500">
+      <div className="mb-6 md:mb-12 p-3 md:p-6 bg-slate-900/50 rounded-xl md:rounded-[2rem] border border-white/5 group-hover:scale-110 group-hover:bg-indigo-600 transition-all shadow-2xl group-hover:text-white text-indigo-500 transform-gpu group-hover:translate-z-20">
         {icon}
       </div>
 
-      <div className="mt-auto">
+      <div className="mt-auto transform-gpu group-hover:translate-z-10">
         <span className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.5em] text-slate-500 mb-1 md:mb-4 block">{sub}</span>
         <h3 className="text-3xl md:text-6xl font-[1000] text-white italic uppercase tracking-tighter mb-3 md:mb-6 leading-none">{title}</h3>
         <p className="text-slate-400 text-sm md:text-xl font-medium italic leading-relaxed mb-4 md:mb-10 max-w-sm">{desc}</p>
@@ -121,11 +121,13 @@ const ActionCard = ({ onClick, title, sub, desc, icon, color }: any) => {
 };
 
 const FeatureItem = ({ icon, title, desc }: any) => (
-  <div className="flex flex-col items-center text-center sm:items-start sm:text-left group">
-    <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-center text-indigo-500 mb-4 md:mb-8 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
+  <div className="flex flex-col items-center text-center sm:items-start sm:text-left group tilt-3d">
+    <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-slate-900/40 border border-white/5 flex items-center justify-center text-indigo-500 mb-4 md:mb-8 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl transform-gpu group-hover:translate-z-10">
       {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: "w-5 h-5 md:w-8 md:h-8" }) : icon}
     </div>
-    <h4 className="text-lg md:text-2xl font-black text-white italic uppercase tracking-tighter mb-1 md:mb-4">{title}</h4>
-    <p className="text-slate-500 text-xs md:text-lg italic leading-relaxed font-medium">{desc}</p>
+    <div className="transform-gpu group-hover:translate-z-5">
+      <h4 className="text-lg md:text-2xl font-black text-white italic uppercase tracking-tighter mb-1 md:mb-4">{title}</h4>
+      <p className="text-slate-500 text-xs md:text-lg italic leading-relaxed font-medium">{desc}</p>
+    </div>
   </div>
 );

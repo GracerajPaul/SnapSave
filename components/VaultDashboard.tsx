@@ -4,7 +4,8 @@ import {
   Upload, Download, Trash2, Settings, Check, 
   FileArchive, Loader2, Search, Database, Clock, 
   ShieldAlert, Image as ImageIcon, HardDrive, Network,
-  Languages, X, ListFilter, Command, Activity, Terminal
+  Languages, X, ListFilter, Command, Activity, Terminal,
+  Shield, Lock, AlertTriangle, LogOut
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { Vault, VaultImage, ExpiryOption } from '../types.ts';
@@ -37,6 +38,9 @@ const TRANSLATIONS: Record<string, any> = {
     processing: "Hydrating",
     saving: "Encrypting...",
     success: "Complete",
+    timeRemaining: "ETA",
+    calculating: "Calculating...",
+    overallProgress: "Global Stream",
   },
   es: {
     dashboardTitle: "Panel Nexus",
@@ -60,6 +64,9 @@ const TRANSLATIONS: Record<string, any> = {
     processing: "Hidratando",
     saving: "Cifrando...",
     success: "Completado",
+    timeRemaining: "ETA",
+    calculating: "Calculando...",
+    overallProgress: "Flujo Global",
   }
 };
 
@@ -72,12 +79,21 @@ interface VaultDashboardProps {
 export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUpdate, onExit }) => {
   const [lang, setLang] = useState('en');
   const [uploading, setUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<{ fileName: string, progress: number } | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<{ 
+    fileName: string, 
+    progress: number,
+    totalFiles: number,
+    currentFileIndex: number,
+    overallProgress: number,
+    timeRemaining: string | null
+  } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
   const [zipStatus, setZipStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [newVaultName, setNewVaultName] = useState(vault.vaultName);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -108,22 +124,64 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const validFiles = Array.from(files).filter(f => f.size <= MAX_FILE_SIZE);
+    if (validFiles.length < files.length) {
+      alert(`CRITICAL ERROR: Some files exceed the 50MB protocol limit.`);
+    }
+    if (validFiles.length === 0) return;
+
     setUploading(true);
+    const totalBytes = validFiles.reduce((acc, f) => acc + f.size, 0);
+    let uploadedBytesTotal = 0;
+    const startTime = Date.now();
+
     try {
       const updatedImages = [...vault.images];
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (file.size > MAX_FILE_SIZE) {
-          alert(`CRITICAL ERROR: File protocol limit is 50MB.`);
-          continue;
-        }
-        setUploadStatus({ fileName: file.name, progress: 0 });
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        
+        setUploadStatus({ 
+          fileName: file.name, 
+          progress: 0,
+          totalFiles: validFiles.length,
+          currentFileIndex: i + 1,
+          overallProgress: Math.round((uploadedBytesTotal / totalBytes) * 100),
+          timeRemaining: t.calculating
+        });
+
         try {
           const tgResult = await TelegramService.uploadFile(file, (progress) => {
-            setUploadStatus({ fileName: file.name, progress: Math.round(progress) });
+            const currentFileUploadedBytes = (progress / 100) * file.size;
+            const currentTotalUploaded = uploadedBytesTotal + currentFileUploadedBytes;
+            const overallProgress = Math.round((currentTotalUploaded / totalBytes) * 100);
+            
+            // Calculate time remaining
+            const elapsedTime = (Date.now() - startTime) / 1000; // seconds
+            const uploadSpeed = currentTotalUploaded / elapsedTime; // bytes per second
+            const remainingBytes = totalBytes - currentTotalUploaded;
+            const remainingSeconds = uploadSpeed > 0 ? remainingBytes / uploadSpeed : 0;
+            
+            let timeStr = t.calculating;
+            if (remainingSeconds > 0) {
+              const mins = Math.floor(remainingSeconds / 60);
+              const secs = Math.floor(remainingSeconds % 60);
+              timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+            }
+
+            setUploadStatus({ 
+              fileName: file.name, 
+              progress: Math.round(progress),
+              totalFiles: validFiles.length,
+              currentFileIndex: i + 1,
+              overallProgress,
+              timeRemaining: timeStr
+            });
           });
+
+          uploadedBytesTotal += file.size;
+
           const newAsset: VaultImage = {
-            id: Math.random().toString(36).substr(2, 9),
+            id: Math.random().toString(36).slice(2, 11),
             name: file.name,
             size: file.size,
             mimeType: file.type || 'application/octet-stream',
@@ -132,8 +190,9 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
             url: URL.createObjectURL(file)
           };
           updatedImages.push(newAsset);
-        } catch (uploadErr: any) {
-          alert(`INJECTION FAILED: Uplink refused.`);
+        } catch (uploadErr) {
+          console.error('Upload error:', uploadErr);
+          alert(`INJECTION FAILED: Uplink refused for ${file.name}.`);
           break;
         }
       }
@@ -166,10 +225,9 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
         setZipStatus(`${t.processing}: ${img.name.slice(0, 10)}... (${i + 1}/${targets.length})`);
         
         try {
-          const rawUrl = await TelegramService.getImageUrl(img.telegramFileId);
-          if (!rawUrl) throw new Error();
+          const proxiedUrl = await TelegramService.getImageUrl(img.telegramFileId);
+          if (!proxiedUrl) throw new Error();
           
-          const proxiedUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rawUrl)}`;
           const response = await fetch(proxiedUrl);
           if (!response.ok) throw new Error();
           
@@ -197,11 +255,55 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
         window.URL.revokeObjectURL(url);
       }, 500);
 
-    } catch (err: any) {
-      alert(`ARCHIVAL ERROR: ${err.message}`);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert(`ARCHIVAL ERROR: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setZipLoading(false);
       setZipStatus('');
+    }
+  };
+
+  const handleUpdateSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingSettings(true);
+    try {
+      const updatedVault = await StorageService.updateVaultSettings(vault.id, {
+        vaultName: newVaultName,
+      });
+      onVaultUpdate(updatedVault);
+      setShowSettings(false);
+    } catch (err) {
+      console.error('Settings update failed:', err);
+      alert('PROTOCOL ERROR: Could not update node parameters.');
+    } finally {
+      setIsUpdatingSettings(false);
+    }
+  };
+
+  const handleEmergencyLock = async () => {
+    if (!confirm('CRITICAL: This will lock the node immediately. Proceed?')) return;
+    try {
+      const updatedVault = await StorageService.updateVaultSettings(vault.id, {
+        isEmergencyLocked: true,
+      });
+      onVaultUpdate(updatedVault);
+      onExit();
+    } catch (err) {
+      alert('LOCKDOWN FAILED.');
+    }
+  };
+
+  const handleDeleteVault = async () => {
+    if (!confirm('ANNIHILATION PROTOCOL: This will permanently destroy the vault and all associated shards. THIS CANNOT BE UNDONE. Proceed?')) return;
+    const confirmName = prompt(`Type "${vault.username}" to confirm destruction:`);
+    if (confirmName !== vault.username) return;
+
+    try {
+      await StorageService.deleteVault(vault.id);
+      onExit();
+    } catch (err) {
+      alert('DESTRUCTION FAILED.');
     }
   };
 
@@ -276,23 +378,65 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       {/* Progress Bars */}
       {(uploadStatus || zipLoading) && (
         <div className="glass-card p-4 md:p-10 rounded-xl md:rounded-[3rem] border-indigo-500/30 animate-in slide-in-from-top-4 duration-700 shadow-2xl bg-indigo-950/5">
-          <div className="flex justify-between items-center mb-3 md:mb-6">
-            <div className="flex items-center gap-3 md:gap-5 min-w-0">
-              <div className="p-2 md:p-3 bg-indigo-500/10 rounded-lg md:rounded-2xl shrink-0"><Command className="w-4 md:w-6 h-4 md:h-6 text-indigo-400 animate-spin-slow" /></div>
-              <div className="min-w-0">
-                <span className="text-xs md:text-lg font-black text-white italic tracking-tight uppercase block truncate">
-                  {zipLoading ? zipStatus : `${uploadStatus?.fileName}`}
-                </span>
-                <span className="text-[6px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest">Protocol Handshake...</span>
+          <div className="flex flex-col gap-6">
+            {/* Current File Progress */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3 md:gap-5 min-w-0">
+                  <div className="p-2 md:p-3 bg-indigo-500/10 rounded-lg md:rounded-2xl shrink-0">
+                    <Command className="w-4 md:w-6 h-4 md:h-6 text-indigo-400 animate-spin-slow" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs md:text-lg font-black text-white italic tracking-tight uppercase block truncate">
+                      {zipLoading ? zipStatus : `${uploadStatus?.fileName}`}
+                    </span>
+                    <span className="text-[6px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                      {zipLoading ? 'Archiving...' : `Shard ${uploadStatus?.currentFileIndex} of ${uploadStatus?.totalFiles}`}
+                    </span>
+                  </div>
+                </div>
+                {uploadStatus && (
+                  <div className="text-right">
+                    <span className="text-sm md:text-3xl font-mono font-black text-indigo-400 tracking-tighter block">{uploadStatus.progress}%</span>
+                    <span className="text-[6px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest">File Progress</span>
+                  </div>
+                )}
+              </div>
+              <div className="w-full h-1 md:h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                <div 
+                  className={`h-full bg-gradient-to-r from-indigo-700 via-indigo-500 to-cyan-400 transition-all duration-300 rounded-full ${zipLoading ? 'animate-pulse' : ''}`} 
+                  style={{ width: zipLoading ? '100%' : `${uploadStatus?.progress}%` }} 
+                />
               </div>
             </div>
-            {uploadStatus && <span className="text-sm md:text-3xl font-mono font-black text-indigo-400 tracking-tighter ml-2">{uploadStatus.progress}%</span>}
-          </div>
-          <div className="w-full h-1 md:h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
-            <div 
-              className={`h-full bg-gradient-to-r from-indigo-700 via-indigo-500 to-cyan-400 transition-all duration-300 rounded-full ${zipLoading ? 'animate-pulse' : ''}`} 
-              style={{ width: zipLoading ? '100%' : `${uploadStatus?.progress}%` }} 
-            />
+
+            {/* Overall Progress & ETA */}
+            {uploadStatus && uploadStatus.totalFiles > 1 && (
+              <div className="space-y-4 pt-4 border-t border-white/5">
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1">
+                    <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.4em] block">{t.overallProgress}</span>
+                    <div className="flex items-center gap-3">
+                      <Activity className="w-3 md:w-4 h-3 md:h-4 text-emerald-500" />
+                      <span className="text-sm md:text-2xl font-black text-white italic uppercase tracking-tighter">{uploadStatus.overallProgress}%</span>
+                    </div>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.4em] block">{t.timeRemaining}</span>
+                    <div className="flex items-center justify-end gap-2">
+                      <Clock className="w-3 md:w-4 h-3 md:h-4 text-indigo-400" />
+                      <span className="text-sm md:text-2xl font-mono font-black text-indigo-400 tracking-tighter">{uploadStatus.timeRemaining}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500 rounded-full" 
+                    style={{ width: `${uploadStatus.overallProgress}%` }} 
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -368,6 +512,11 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                     const v = await StorageService.updateVaultImages(vault.id, updated);
                     onVaultUpdate(v);
                   }} 
+                  onUpdate={async (updatedImg) => {
+                    const updatedImages = vault.images.map(i => i.id === updatedImg.id ? updatedImg : i);
+                    const v = await StorageService.updateVaultImages(vault.id, updatedImages);
+                    onVaultUpdate(v);
+                  }}
                 />
               </div>
               {selectionMode && (
@@ -396,28 +545,122 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/98 backdrop-blur-[15px] md:backdrop-blur-[40px] animate-in fade-in duration-700">
+          <div className="glass-card w-full max-w-2xl p-6 md:p-12 md:p-20 rounded-[2rem] md:rounded-[5rem] border-white/5 relative shadow-[0_0_200px_-50px_rgba(99,102,241,0.4)] overflow-y-auto max-h-[90vh]">
+            <button onClick={() => setShowSettings(false)} className="absolute top-5 md:top-12 right-5 md:right-12 text-slate-600 hover:text-white transition-all"><X className="w-6 md:w-10 h-6 md:h-10" /></button>
+            
+            <div className="mb-12 text-center">
+              <div className="w-16 md:w-28 h-16 md:h-28 bg-indigo-600 rounded-xl md:rounded-[2.5rem] mx-auto flex items-center justify-center mb-6 md:mb-12 shadow-2xl">
+                <Settings className="w-8 md:w-14 h-8 md:h-14 text-white animate-spin-slow" />
+              </div>
+              <h3 className="text-2xl md:text-6xl font-[1000] text-white italic uppercase tracking-tighter mb-3 leading-none">Node Parameters</h3>
+              <p className="text-slate-500 italic text-sm md:text-xl">Configure cryptographic node settings and security protocols.</p>
+            </div>
+
+            <form onSubmit={handleUpdateSettings} className="space-y-8 md:space-y-12">
+              <div className="space-y-4">
+                <label className="text-[8px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.5em] ml-4">Vault Alias</label>
+                <input 
+                  type="text"
+                  value={newVaultName}
+                  onChange={(e) => setNewVaultName(e.target.value)}
+                  className="w-full bg-slate-950/80 border border-white/5 rounded-2xl md:rounded-[2rem] px-6 md:px-10 py-4 md:py-6 text-white font-bold tracking-tight focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                  placeholder="Enter vault name..."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <button 
+                  type="button"
+                  onClick={handleEmergencyLock}
+                  className="flex items-center justify-between p-6 md:p-10 bg-red-600/10 border border-red-500/20 rounded-2xl md:rounded-[3rem] text-red-500 hover:bg-red-600 hover:text-white transition-all group"
+                >
+                  <div className="text-left">
+                    <p className="text-sm md:text-2xl font-[1000] uppercase italic tracking-tighter leading-none mb-1">Lockdown</p>
+                    <p className="text-[6px] md:text-[10px] font-black uppercase tracking-widest opacity-60">Emergency Protocol</p>
+                  </div>
+                  <Lock className="w-5 md:w-8 h-5 md:h-8 group-hover:scale-110 transition-transform" />
+                </button>
+
+                <button 
+                  type="button"
+                  onClick={onExit}
+                  className="flex items-center justify-between p-6 md:p-10 bg-slate-900 border border-white/5 rounded-2xl md:rounded-[3rem] text-slate-400 hover:bg-white hover:text-black transition-all group"
+                >
+                  <div className="text-left">
+                    <p className="text-sm md:text-2xl font-[1000] uppercase italic tracking-tighter leading-none mb-1">Terminate</p>
+                    <p className="text-[6px] md:text-[10px] font-black uppercase tracking-widest opacity-60">End Session</p>
+                  </div>
+                  <LogOut className="w-5 md:w-8 h-5 md:h-8 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+
+              <div className="pt-8 md:pt-12 border-t border-white/5">
+                <button 
+                  type="submit"
+                  disabled={isUpdatingSettings}
+                  className="w-full py-5 md:py-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl md:rounded-[3rem] font-[1000] italic uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4"
+                >
+                  {isUpdatingSettings ? <Loader2 className="w-6 h-6 animate-spin" /> : <Check className="w-6 h-6" />}
+                  Save Parameters
+                </button>
+              </div>
+
+              <div className="pt-12 md:pt-24">
+                <button 
+                  type="button"
+                  onClick={handleDeleteVault}
+                  className="w-full py-4 text-[8px] md:text-xs font-black text-red-900/40 hover:text-red-600 uppercase tracking-[0.5em] transition-all flex items-center justify-center gap-4 group"
+                >
+                  <AlertTriangle className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  Initiate Self-Destruction Sequence
+                  <AlertTriangle className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-const HUDCard = ({ icon, label, value, color, pulse }: any) => {
+interface HUDCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  color?: 'cyan' | 'indigo' | 'slate';
+  pulse?: boolean;
+}
+
+const HUDCard = ({ icon, label, value, color, pulse }: HUDCardProps) => {
   const isCyan = color === 'cyan';
   const isIndigo = color === 'indigo';
 
   return (
-    <div className="glass-card p-3 md:p-10 rounded-xl md:rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[80px] md:min-h-[180px]">
+    <div className="glass-card p-3 md:p-10 rounded-xl md:rounded-[3rem] bg-slate-900/20 border border-white/5 group hover:border-indigo-500/20 transition-all flex flex-col justify-between min-h-[80px] md:min-h-[180px] tilt-3d">
       <div className="flex items-center gap-2 md:gap-5 mb-2 md:mb-6">
         <div className={`p-1.5 md:p-3 bg-slate-950 border border-white/5 rounded-lg md:rounded-2xl ${isCyan ? 'text-cyan-400' : isIndigo ? 'text-indigo-400' : 'text-slate-500'} ${pulse ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform shrink-0`}>
           {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<any>, { className: "w-3 md:w-6 h-3 md:h-6" }) : icon}
         </div>
         <span className="text-[6px] md:text-[11px] font-black text-slate-600 uppercase tracking-[0.1em] md:tracking-[0.4em] truncate">{label}</span>
       </div>
-      <div className="text-sm md:text-4xl font-[1000] text-white italic tracking-tighter leading-none truncate">{value}</div>
+      <div className="text-sm md:text-4xl font-[1000] text-white italic tracking-tighter leading-none truncate transform-gpu group-hover:translate-z-10">{value}</div>
     </div>
   );
 };
 
-const ExportOptionBtn = ({ onClick, label, sub, color }: any) => (
+interface ExportOptionBtnProps {
+  onClick: () => void;
+  label: string;
+  sub: string;
+  color: 'indigo' | 'slate';
+}
+
+const ExportOptionBtn = ({ onClick, label, sub, color }: ExportOptionBtnProps) => (
   <button 
     onClick={onClick}
     className={`flex items-center justify-between p-4 md:p-10 rounded-xl md:rounded-[3rem] border transition-all group active:scale-95 ${color === 'indigo' ? 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500 shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'}`}

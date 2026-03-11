@@ -3,13 +3,11 @@ import React from 'react';
 import { 
   Shield, Lock, Trash2, Clock, Share2, Upload, Download, 
   Eye, EyeOff, AlertTriangle, Instagram, Twitter, Youtube, 
-  Mail, ExternalLink, Trophy, Cpu, Zap, Brain
+  Mail, ExternalLink, Trophy, Cpu, Zap, Brain, Square, Maximize
 } from 'lucide-react';
 
 export const APP_NAME = "SnapSave";
 export const TAGLINE = "Secure Multi-Format Asset Vault";
-export const TG_BOT_TOKEN = "8585527211:AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ";
-export const TG_CHAT_ID = "7303640347";
 
 export const ICONS = {
   Shield: <Shield className="w-5 h-5" />,
@@ -31,6 +29,8 @@ export const ICONS = {
   Cpu: <Cpu className="w-5 h-5" />,
   Zap: <Zap className="w-5 h-5" />,
   Brain: <Brain className="w-5 h-5" />,
+  Square: <Square className="w-5 h-5" />,
+  Maximize: <Maximize className="w-5 h-5" />,
 };
 
 /**

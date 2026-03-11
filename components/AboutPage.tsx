@@ -63,6 +63,13 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
       image: "https://raw.githubusercontent.com/GracerajPaul/Abhilash/main/IMG_20260216_193601_604.jpg",
       talent: "Ecosystem Growth",
       description: "Driving force behind SnapSave's strategic partnerships and expansion into emerging digital privacy markets."
+    },
+    {
+      name: "Joohi Tanishq",
+      role: "CFO",
+      image: "https://raw.githubusercontent.com/GracerajPaul/Joohi-Tanishq/main/IMG_20260311_150614_978.jpg",
+      talent: "Fiscal Resilience",
+      description: "Strategic financial architect overseeing SnapSave's capital allocation and fiscal resilience in the decentralized privacy economy."
     }
   ];
 
@@ -183,7 +190,7 @@ export const AboutPage: React.FC<AboutPageProps> = ({ onBack }) => {
           <h4 className="text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tighter italic uppercase">The <span className="text-indigo-500">Execution</span> Unit</h4>
           <div className="h-[1px] md:h-[2px] flex-1 bg-gradient-to-r from-indigo-500/40 to-transparent"></div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           {executiveTeam.map((member, i) => (
             <div key={member.name} className="group relative">
                 <div className="relative glass-card p-4 md:p-6 rounded-[2rem] md:rounded-[4rem] border border-white/5 bg-slate-950/40 overflow-hidden transition-all duration-700 hover:-translate-y-2 hover:border-indigo-500/20">
