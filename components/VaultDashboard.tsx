@@ -85,13 +85,16 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
     totalFiles: number,
     currentFileIndex: number,
     overallProgress: number,
-    timeRemaining: string | null
+    timeRemaining: string | null,
+    speed: string | null
   } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [zipLoading, setZipLoading] = useState(false);
   const [zipStatus, setZipStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [newVaultName, setNewVaultName] = useState(vault.vaultName);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
   
@@ -101,12 +104,21 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   const fileInputRef = useRef<HTMLInputElement>(null);
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
-  const filteredAssets = useMemo(() => {
-    return vault.images.filter(img => 
+  const sortedAssets = useMemo(() => {
+    const filtered = vault.images.filter(img => 
       img.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       img.mimeType.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [vault.images, searchQuery]);
+
+    return [...filtered].sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'date') comparison = a.uploadedAt - b.uploadedAt;
+      else if (sortBy === 'name') comparison = a.name.localeCompare(b.name);
+      else if (sortBy === 'size') comparison = a.size - b.size;
+      
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+  }, [vault.images, searchQuery, sortBy, sortOrder]);
 
   const totalSize = useMemo(() => {
     const bytes = vault.images.reduce((acc, img) => acc + img.size, 0);
@@ -146,7 +158,8 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           totalFiles: validFiles.length,
           currentFileIndex: i + 1,
           overallProgress: Math.round((uploadedBytesTotal / totalBytes) * 100),
-          timeRemaining: t.calculating
+          timeRemaining: t.calculating,
+          speed: '0 MB/s'
         });
 
         try {
@@ -168,13 +181,24 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
               timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
             }
 
+            // Calculate speed string
+            let speedStr = '0 B/s';
+            if (uploadSpeed > 1024 * 1024) {
+              speedStr = `${(uploadSpeed / (1024 * 1024)).toFixed(2)} MB/s`;
+            } else if (uploadSpeed > 1024) {
+              speedStr = `${(uploadSpeed / 1024).toFixed(1)} KB/s`;
+            } else {
+              speedStr = `${Math.round(uploadSpeed)} B/s`;
+            }
+
             setUploadStatus({ 
               fileName: file.name, 
               progress: Math.round(progress),
               totalFiles: validFiles.length,
               currentFileIndex: i + 1,
               overallProgress,
-              timeRemaining: timeStr
+              timeRemaining: timeStr,
+              speed: speedStr
             });
           });
 
@@ -348,11 +372,46 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                 placeholder={t.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-slate-950/90 border border-slate-800 rounded-xl md:rounded-[2rem] pl-10 md:pl-16 pr-4 md:pr-10 py-3 md:py-5 text-xs md:text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full xl:w-[400px] text-white placeholder:text-slate-800 transition-all font-medium"
+                className="bg-slate-950/90 border border-slate-800 rounded-xl md:rounded-[2rem] pl-10 md:pl-16 pr-12 md:pr-16 py-3 md:py-5 text-xs md:text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50 w-full xl:w-[400px] text-white placeholder:text-slate-800 transition-all font-medium"
               />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 text-slate-600 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4 md:w-5 h-5" />
+                </button>
+              )}
             </div>
 
             <div className="flex gap-2 md:gap-4 h-12 md:h-auto">
+              <div className="flex bg-slate-950/90 border border-slate-800 rounded-xl md:rounded-[2rem] p-1">
+                {[
+                  { id: 'date', icon: <Clock className="w-4 h-4" /> },
+                  { id: 'name', icon: <Languages className="w-4 h-4" /> },
+                  { id: 'size', icon: <HardDrive className="w-4 h-4" /> },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      if (sortBy === opt.id) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                      else setSortBy(opt.id as any);
+                    }}
+                    className={`p-2 md:p-4 rounded-lg md:rounded-[1.5rem] transition-all flex items-center gap-2 ${
+                      sortBy === opt.id 
+                      ? 'bg-indigo-600 text-white shadow-lg' 
+                      : 'text-slate-600 hover:text-slate-400'
+                    }`}
+                  >
+                    {opt.icon}
+                    {sortBy === opt.id && (
+                      <span className="text-[10px] font-black uppercase tracking-widest hidden md:block">
+                        {sortOrder === 'asc' ? 'ASC' : 'DESC'}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
               <button 
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
@@ -410,10 +469,10 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
               </div>
             </div>
 
-            {/* Overall Progress & ETA */}
-            {uploadStatus && uploadStatus.totalFiles > 1 && (
+            {/* Overall Progress & ETA & Speed */}
+            {uploadStatus && (
               <div className="space-y-4 pt-4 border-t border-white/5">
-                <div className="flex justify-between items-end">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-1">
                     <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.4em] block">{t.overallProgress}</span>
                     <div className="flex items-center gap-3">
@@ -421,6 +480,15 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                       <span className="text-sm md:text-2xl font-black text-white italic uppercase tracking-tighter">{uploadStatus.overallProgress}%</span>
                     </div>
                   </div>
+                  
+                  <div className="text-center space-y-1">
+                    <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.4em] block">Throughput</span>
+                    <div className="flex items-center justify-center gap-2">
+                      <Network className="w-3 md:w-4 h-3 md:h-4 text-cyan-400 animate-pulse" />
+                      <span className="text-sm md:text-2xl font-mono font-black text-cyan-400 tracking-tighter">{uploadStatus.speed}</span>
+                    </div>
+                  </div>
+
                   <div className="text-right space-y-1">
                     <span className="text-[7px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] md:tracking-[0.4em] block">{t.timeRemaining}</span>
                     <div className="flex items-center justify-end gap-2">
@@ -431,7 +499,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                 </div>
                 <div className="w-full h-1 bg-slate-950 rounded-full overflow-hidden border border-white/5 p-0.5">
                   <div 
-                    className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500 rounded-full" 
+                    className="h-full bg-gradient-to-r from-emerald-600 via-cyan-500 to-emerald-400 transition-all duration-500 rounded-full" 
                     style={{ width: `${uploadStatus.overallProgress}%` }} 
                   />
                 </div>
@@ -448,6 +516,9 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
             <Network className="w-5 md:w-8 h-5 md:h-8 text-indigo-500" />
             Shard Stream
           </h3>
+          <div className="px-3 md:px-5 py-1 md:py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
+            <span className="text-[8px] md:text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em] md:tracking-[0.4em]">{sortedAssets.length} Active Streams</span>
+          </div>
           <button 
             onClick={() => { setSelectionMode(!selectionMode); setSelectedIds(new Set()); }}
             className={`px-3 md:px-8 py-1.5 md:py-2.5 rounded-full text-[7px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.3em] border transition-all flex items-center gap-1.5 md:gap-3 ${selectionMode ? 'bg-indigo-600 border-indigo-500 text-white shadow-xl' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
@@ -459,12 +530,15 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
 
         <div className="flex items-center gap-3 md:gap-8 w-full md:w-auto">
           {selectionMode && selectedIds.size > 0 && (
-            <button 
-              onClick={() => executeExport('selected')}
-              className="flex-1 md:flex-none px-4 md:px-10 py-2 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg md:rounded-2xl text-[8px] md:text-[11px] font-[1000] uppercase tracking-[0.1em] md:tracking-[0.3em] transition-all flex items-center justify-center gap-2 md:gap-4 shadow-xl active:scale-95"
-            >
-              Extract ({selectedIds.size})
-            </button>
+            <div className="flex items-center gap-3 animate-in slide-in-from-right-4 duration-500">
+              <span className="text-[8px] md:text-xs font-black text-slate-500 uppercase tracking-widest">{selectedIds.size} Selected</span>
+              <button 
+                onClick={() => executeExport('selected')}
+                className="px-4 md:px-10 py-2 md:py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg md:rounded-2xl text-[8px] md:text-[11px] font-[1000] uppercase tracking-[0.1em] md:tracking-[0.3em] transition-all flex items-center justify-center gap-2 md:gap-4 shadow-xl active:scale-95"
+              >
+                Extract
+              </button>
+            </div>
           )}
           <button 
             onClick={() => setShowExportModal(true)} 
@@ -478,7 +552,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       </div>
 
       {/* Responsive Grid */}
-      {filteredAssets.length === 0 ? (
+      {sortedAssets.length === 0 ? (
         <div className="py-16 md:py-64 text-center glass-card rounded-[1.5rem] md:rounded-[5rem] border-dashed border-slate-800 bg-transparent group hover:border-indigo-500/20 transition-all duration-1000">
            <div className="p-5 md:p-10 bg-slate-900/40 rounded-xl md:rounded-[3rem] w-16 md:w-32 h-16 md:h-32 flex items-center justify-center mx-auto mb-4 md:mb-10 transition-transform group-hover:bg-indigo-950/30">
               <ImageIcon className="w-6 md:w-12 h-6 md:h-12 text-slate-800 group-hover:text-indigo-600" />
@@ -488,7 +562,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-12">
-          {filteredAssets.map((img) => (
+          {sortedAssets.map((img) => (
             <div key={img.id} className="relative group/wrapper">
               {selectionMode && (
                 <div 

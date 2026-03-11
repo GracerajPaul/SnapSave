@@ -97,9 +97,10 @@ export const VaultAccess: React.FC<VaultAccessProps> = ({ onSuccess, onCancel })
               type="text"
               required
               placeholder="AGENT_ID"
+              autoComplete="username"
               className="w-full bg-slate-950/80 border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white font-mono tracking-widest uppercase placeholder:text-slate-800 transition-all"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
             />
           </div>
 
@@ -110,6 +111,7 @@ export const VaultAccess: React.FC<VaultAccessProps> = ({ onSuccess, onCancel })
               required
               maxLength={6}
               placeholder="••••••"
+              autoComplete="current-password"
               className="w-full bg-slate-950/80 border border-white/5 rounded-2xl px-6 py-5 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white tracking-[1em] text-center text-2xl font-mono placeholder:text-slate-800 transition-all"
               value={pin}
               onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}

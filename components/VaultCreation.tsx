@@ -48,66 +48,74 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
   };
 
   return (
-    <div className="max-w-md mx-auto animate-in slide-in-from-bottom-8 duration-500 px-2">
+    <div className="max-w-md mx-auto animate-in slide-in-from-bottom-8 duration-1000 relative px-2">
+      <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 blur-[100px] pointer-events-none animate-pulse" />
+      <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-cyan-600/10 blur-[100px] pointer-events-none animate-pulse" />
+
       <button 
         onClick={onCancel}
-        className="flex items-center gap-2 text-slate-500 hover:text-white mb-6 md:mb-8 transition-colors text-xs font-black uppercase tracking-widest"
+        className="flex items-center gap-2 text-slate-500 hover:text-white mb-12 transition-all group px-4 py-2 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
       >
-        <ArrowLeft className="w-4 h-4" /> Back to Terminal
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
+        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Abort Protocol</span>
       </button>
 
-      <div className="glass-card p-6 md:p-10 rounded-[2rem] md:rounded-[3rem] shadow-2xl border-white/5">
-        <div className="mb-6 md:mb-10 text-center">
-          <div className="inline-flex p-4 bg-indigo-500/10 rounded-2xl mb-4 md:mb-6 border border-indigo-500/20">
-            <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-indigo-500" />
+      <div className="glass-card p-10 md:p-16 rounded-[3rem] md:rounded-[4rem] shadow-2xl tilt-3d border-white/5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/5 blur-3xl pointer-events-none" />
+        
+        <div className="mb-12 text-center transform-gpu group-hover:translate-z-20">
+          <div className="inline-flex p-5 bg-slate-950 border border-white/5 rounded-[2rem] mb-6 shadow-inner text-indigo-500">
+            <ShieldCheck className="w-10 h-10 animate-pulse" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-[1000] text-white uppercase italic tracking-tighter leading-none mb-2">Forge Node</h2>
-          <p className="text-slate-500 text-[10px] md:text-xs font-black uppercase tracking-[0.2em]">Unlimited shard capacity.</p>
+          <h2 className="text-4xl font-[1000] text-white italic uppercase tracking-tighter leading-none mb-3">Forge Node</h2>
+          <p className="text-slate-600 text-[9px] font-black uppercase tracking-[0.4em]">Initialize Shard Lattice</p>
         </div>
 
-        <form onSubmit={handleCreate} className="space-y-5 md:space-y-6">
-          <div>
-            <label className="block text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Node Identifier</label>
+        <form onSubmit={handleCreate} className="space-y-8 transform-gpu group-hover:translate-z-10">
+          <div className="space-y-3">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Node Identifier</label>
             <input 
               type="text"
               required
-              placeholder="e.g. ghost_operative"
-              className="w-full bg-slate-950/80 border border-slate-800 rounded-xl md:rounded-2xl px-5 py-3 md:py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white font-medium"
+              placeholder="AGENT_ID"
+              autoComplete="username"
+              className="w-full bg-slate-950/80 border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white font-mono tracking-widest uppercase placeholder:text-slate-800 transition-all"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s/g, ''))}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Access PIN</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Access Key</label>
               <input 
                 type="password"
                 required
                 maxLength={6}
-                placeholder="4-6 Digits"
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl md:rounded-2xl px-5 py-3 md:py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white tracking-[0.5em] text-center text-lg md:text-xl font-mono"
+                placeholder="••••••"
+                autoComplete="new-password"
+                className="w-full bg-slate-950/80 border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white tracking-[0.5em] text-center text-xl font-mono placeholder:text-slate-800 transition-all"
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
               />
             </div>
-            <div>
-              <label className="block text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 px-1">Nexus Label</label>
+            <div className="space-y-3">
+              <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4">Nexus Label</label>
               <input 
                 type="text"
-                placeholder="Private_Vault"
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl md:rounded-2xl px-5 py-3 md:py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white font-medium"
+                placeholder="PRIVATE_VAULT"
+                className="w-full bg-slate-950/80 border border-white/5 rounded-2xl px-6 py-4 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 text-white font-bold tracking-tight uppercase placeholder:text-slate-800 transition-all"
                 value={vaultName}
                 onChange={(e) => setVaultName(e.target.value)}
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-[9px] md:text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 flex items-center gap-2 px-1">
+          <div className="space-y-4">
+            <label className="text-[8px] font-black text-slate-500 uppercase tracking-[0.4em] ml-4 flex items-center gap-2">
               <Clock className="w-3 h-3" /> Expiry Protocol
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-3">
               {[
                 { label: '24h', value: ExpiryOption.ONE_DAY },
                 { label: '7d', value: ExpiryOption.SEVEN_DAYS },
@@ -118,10 +126,10 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
                   key={opt.value}
                   type="button"
                   onClick={() => setExpiry(opt.value)}
-                  className={`py-2.5 px-1 text-[10px] md:text-xs rounded-xl border transition-all font-black uppercase tracking-tighter ${
+                  className={`py-3 px-1 text-[10px] rounded-xl border transition-all font-black uppercase tracking-tighter ${
                     expiry === opt.value 
                     ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20' 
-                    : 'bg-slate-950/50 border-slate-800 text-slate-600 hover:text-slate-400'
+                    : 'bg-slate-950/50 border-white/5 text-slate-600 hover:text-slate-400'
                   }`}
                 >
                   {opt.label}
@@ -131,17 +139,17 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
           </div>
 
           <div 
-            className="flex items-start gap-3 cursor-pointer group p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all"
+            className="flex items-start gap-4 cursor-pointer group p-5 bg-slate-950/50 rounded-2xl border border-white/5 hover:border-white/10 transition-all"
             onClick={() => setTermsAccepted(!termsAccepted)}
           >
             <div className="mt-0.5">
               {termsAccepted ? (
-                <CheckSquare className="w-5 h-5 text-indigo-500" />
+                <CheckSquare className="w-6 h-6 text-indigo-500" />
               ) : (
-                <Square className="w-5 h-5 text-slate-800 group-hover:text-slate-600" />
+                <Square className="w-6 h-6 text-slate-800 group-hover:text-slate-600" />
               )}
             </div>
-            <p className="text-[9px] md:text-[10px] text-slate-500 leading-tight select-none uppercase font-black tracking-tight">
+            <p className="text-[9px] text-slate-500 leading-tight select-none uppercase font-black tracking-tight">
               I accept the protocol constraints including the 50MB file limit and waiver.
               <button 
                 type="button"
@@ -154,7 +162,7 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
           </div>
 
           {error && (
-            <div className="p-3 bg-red-600/10 border border-red-500/20 text-red-500 rounded-xl text-[10px] font-black text-center uppercase tracking-widest">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center animate-in shake duration-500">
               {error}
             </div>
           )}
@@ -162,13 +170,13 @@ export const VaultCreation: React.FC<VaultCreationProps> = ({ onSuccess, onCance
           <button
             type="submit"
             disabled={loading || !termsAccepted}
-            className={`w-full py-4 md:py-5 rounded-2xl font-[1000] text-white italic uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${
+            className={`w-full py-6 rounded-[2rem] font-[1000] italic uppercase tracking-[0.3em] text-white transition-all flex items-center justify-center gap-4 shadow-2xl active:scale-95 ${
               termsAccepted && !loading
-              ? 'bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-600/30 active:scale-95' 
-              : 'bg-slate-900 text-slate-700 cursor-not-allowed'
+              ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' 
+              : 'bg-slate-900 text-slate-700 cursor-not-allowed border border-white/5'
             }`}
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Execute Deployment'}
+            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Execute Deployment'}
           </button>
         </form>
       </div>

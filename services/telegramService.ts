@@ -15,7 +15,7 @@ export const TelegramService = {
       const xhr = new XMLHttpRequest();
       xhr.timeout = 300000; // 5 minutes
       
-      xhr.open('POST', '/api/telegram/upload', true);
+      xhr.open('POST', '/api/vault/upload', true);
 
       if (onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -67,17 +67,26 @@ export const TelegramService = {
    * Resolves a Telegram file_id to a temporary download URL via proxy.
    */
   async getImageUrl(fileId: string): Promise<string> {
+    if (!fileId) return '';
     try {
-      const response = await fetch(`/api/telegram/file-info/${fileId}`);
+      const url = `/api/vault/shard-info/${encodeURIComponent(fileId)}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ description: 'Unknown error' }));
+        console.error(`Server Error (${response.status}) at ${url}:`, errorData.description);
+        return '';
+      }
+
       const data = await response.json();
       
       if (data.ok) {
         const filePath = data.result.file_path;
-        return `/api/telegram/download?filePath=${encodeURIComponent(filePath)}`;
+        return `/api/vault/shard-download?filePath=${encodeURIComponent(filePath)}`;
       }
       return '';
     } catch (error) {
-      console.error('Failed to resolve Telegram asset path:', error);
+      console.error(`Failed to resolve Telegram asset path for ${fileId}:`, error instanceof Error ? error.message : error);
       return '';
     }
   }
