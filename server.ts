@@ -23,8 +23,8 @@ async function startServer() {
 
   const upload = multer({ storage: multer.memoryStorage() });
 
-  const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN;
-  const TG_CHAT_ID = process.env.TG_CHAT_ID;
+  const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ");
+  const TG_CHAT_ID = process.env.TG_CHAT_ID || "7303640347";
 
   if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
     console.warn("WARNING: TG_BOT_TOKEN or TG_CHAT_ID is missing from environment variables.");

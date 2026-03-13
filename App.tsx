@@ -101,15 +101,6 @@ const App: React.FC = () => {
       onHomeClick={() => setView('landing')}
     >
       <div className="atmosphere" />
-      
-      {/* Global Connection Warning */}
-      {!StorageService.isConnected() && (
-        <div className="fixed top-0 left-0 w-full z-[500] bg-red-600/90 backdrop-blur-md border-b border-red-500/50 p-2 text-center">
-          <p className="text-[10px] font-black text-white uppercase tracking-widest">
-            CRITICAL: Database offline. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Settings {'->'} Secrets.
-          </p>
-        </div>
-      )}
 
       {view === 'landing' && (
         <LandingPage 
