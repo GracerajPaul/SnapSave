@@ -176,6 +176,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
           src={displayUrl || 'https://via.placeholder.com/400?text=Stream+Interrupted'} 
           alt={image.name} 
           onLoad={() => setIsLoaded(true)}
+          referrerPolicy="no-referrer"
           className={`w-full h-full object-contain transition-all duration-[2000ms] ease-out group-hover:scale-105 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       );
@@ -254,7 +255,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
           </button>
           <div className="w-full max-w-[90vw] max-h-[80vh] relative flex items-center justify-center">
             {isImage ? (
-              <img src={displayUrl} className="w-full h-full object-contain rounded-3xl shadow-[0_0_100px_rgba(0,0,0,1)]" alt={image.name} />
+              <img src={displayUrl} referrerPolicy="no-referrer" className="w-full h-full object-contain rounded-3xl shadow-[0_0_100px_rgba(0,0,0,1)]" alt={image.name} />
             ) : (
               <div className="flex flex-col items-center justify-center gap-12 text-center p-20 glass-card rounded-[5rem]">
                 <FileText className="w-32 h-32 text-indigo-500" />

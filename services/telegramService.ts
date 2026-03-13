@@ -11,17 +11,13 @@ export const TelegramService = {
    */
   async uploadFile(file: File, onProgress?: (percent: number) => void): Promise<{ file_id: string }> {
     return new Promise((resolve, reject) => {
-      const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ");
-      const TG_CHAT_ID = import.meta.env.VITE_TG_CHAT_ID || "7303640347";
-
       const formData = new FormData();
-      formData.append('chat_id', TG_CHAT_ID);
       formData.append('document', file);
 
       const xhr = new XMLHttpRequest();
       xhr.timeout = 300000; // 5 minutes
       
-      xhr.open('POST', `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument`, true);
+      xhr.open('POST', '/api/vault/upload', true);
 
       if (onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -77,13 +73,11 @@ export const TelegramService = {
     if (urlCache.has(fileId)) return urlCache.get(fileId)!;
     
     try {
-      const TG_BOT_TOKEN = import.meta.env.VITE_TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ");
-      const url = `https://api.telegram.org/bot${TG_BOT_TOKEN}/getFile?file_id=${encodeURIComponent(fileId)}`;
-      const response = await fetch(url);
+      const response = await fetch(`/api/vault/shard-info/${encodeURIComponent(fileId)}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ description: 'Unknown error' }));
-        console.error(`Server Error (${response.status}) at ${url}:`, errorData.description);
+        console.error(`Server Error (${response.status}):`, errorData.description);
         return '';
       }
 
