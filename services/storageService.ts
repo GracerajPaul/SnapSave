@@ -5,13 +5,17 @@ import { Vault, ExpiryOption, VaultImage } from '../types.ts';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Initialize Supabase only if keys are present to prevent crash
-const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY) 
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+let supabase: any = null;
+try {
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+} catch (e: any) {
+  console.error("Failed to initialize Supabase client. Check if the URL and Key are valid.", e.message);
+}
 
 if (!supabase) {
-  console.error("CRITICAL: Supabase environment variables are missing. The vault will not function.");
+  console.error("CRITICAL: Supabase environment variables are missing or invalid. The vault will not function.");
 }
 
 /**
@@ -57,7 +61,13 @@ export const StorageService = {
 
     if (error) {
       if (error.code === '23505') throw new Error('Username already claimed by another agent.');
-      throw new Error(error.message);
+      if (error.code === '42P01') throw new Error('Database table "vaults" is missing. Please run the SQL setup script in your Supabase dashboard.');
+      if (error.code === '42501') throw new Error('Access denied by Row Level Security. Please check your Supabase policies.');
+      throw new Error(`Database Error: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('Failed to create vault. Please check your Supabase Row Level Security (RLS) policies.');
     }
 
     return this._mapVault(data);

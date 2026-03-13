@@ -4,6 +4,8 @@ node_modules/
 dist/
 dist-ssr/
 *.local
+.env
+migrated_prompt_history/
 
 # Logs
 logs

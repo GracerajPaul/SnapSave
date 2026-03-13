@@ -25,7 +25,12 @@ const App: React.FC = () => {
       const vaultIdFromUrl = urlParams.get('vaultId');
       
       // 2. Check LocalStorage for an active session
-      const savedVaultId = localStorage.getItem(SESSION_KEY);
+      let savedVaultId = null;
+      try {
+        savedVaultId = localStorage.getItem(SESSION_KEY);
+      } catch (e) {
+        console.warn('LocalStorage access denied', e);
+      }
       
       if (vaultIdFromUrl) {
         setView('access');
@@ -36,10 +41,10 @@ const App: React.FC = () => {
             setActiveVault(vault);
             setView('dashboard');
           } else {
-            localStorage.removeItem(SESSION_KEY);
+            try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
           }
         } catch (e) {
-          localStorage.removeItem(SESSION_KEY);
+          try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
         }
       }
       
@@ -50,19 +55,31 @@ const App: React.FC = () => {
 
   const handleCreateSuccess = (vault: Vault) => {
     setActiveVault(vault);
-    localStorage.setItem(SESSION_KEY, vault.id);
+    try {
+      localStorage.setItem(SESSION_KEY, vault.id);
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
     setView('dashboard');
   };
 
   const handleAccessSuccess = (vault: Vault) => {
     setActiveVault(vault);
-    localStorage.setItem(SESSION_KEY, vault.id);
+    try {
+      localStorage.setItem(SESSION_KEY, vault.id);
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
     setView('dashboard');
   };
 
   const handleLogout = () => {
     setActiveVault(null);
-    localStorage.removeItem(SESSION_KEY);
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (e) {
+      console.warn('LocalStorage access denied', e);
+    }
     setView('landing');
     // Clear any hash
     window.location.hash = '';
@@ -118,7 +135,9 @@ const App: React.FC = () => {
           onVaultUpdate={(v) => {
             setActiveVault(v);
             // Ensure session is kept updated
-            localStorage.setItem(SESSION_KEY, v.id);
+            try {
+              localStorage.setItem(SESSION_KEY, v.id);
+            } catch (e) {}
           }}
           onExit={handleLogout}
         />
