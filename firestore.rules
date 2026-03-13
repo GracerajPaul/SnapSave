@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: vaults
+    // Document ID: {vaultId}
+    // Fields:
+    //   - id: string (required)
+    //   - username: string (required)
+    //   - vaultName: string (required)
+    //   - pinHash: string (required)
+    //   - images: array of objects (optional)
+    //   - createdAt: number (required)
+    //   - expiry: string (required)
+    //   - isEmergencyLocked: boolean (optional)
+    //   - failedAttempts: number (optional)
+    //   - isViewOnly: boolean (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "infograce0@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidVault(data) {
+      return data.id is string &&
+             data.username is string && data.username.size() >= 3 && data.username.size() <= 50 &&
+             data.vaultName is string && data.vaultName.size() <= 100 &&
+             data.pinHash is string &&
+             data.createdAt is number &&
+             data.expiry is string &&
+             (!('images' in data) || data.images is list) &&
+             (!('isEmergencyLocked' in data) || data.isEmergencyLocked is bool) &&
+             (!('failedAttempts' in data) || data.failedAttempts is number) &&
+             (!('isViewOnly' in data) || data.isViewOnly is bool);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /vaults/{vaultId} {
+      // Allow reading if authenticated (or you could restrict to specific logic)
+      // For this app, vaults are accessed by username/PIN, so we allow read if they know the ID
+      allow read: if true; 
+      
+      allow create: if isValidVault(request.resource.data) && 
+                      hasRequiredFields(['id', 'username', 'vaultName', 'pinHash', 'createdAt', 'expiry']);
+      
+      allow update: if isValidVault(request.resource.data);
+      
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -176,7 +176,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
           src={displayUrl || 'https://via.placeholder.com/400?text=Stream+Interrupted'} 
           alt={image.name} 
           onLoad={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover transition-all duration-[2000ms] ease-out group-hover:scale-110 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full object-contain transition-all duration-[2000ms] ease-out group-hover:scale-105 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         />
       );
     }
@@ -193,7 +193,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
   return (
     <>
       <div ref={cardRef} className="group relative glass-card rounded-[3rem] overflow-hidden border-white/5 bg-slate-950/40 hover:shadow-[0_40px_80px_-25px_rgba(0,0,0,0.8)] transition-all duration-700 animate-in fade-in zoom-in-95 tilt-3d">
-        <div className="aspect-square w-full overflow-hidden bg-slate-950 relative flex items-center justify-center cursor-pointer transform-gpu group-hover:translate-z-10">
+        <div className="aspect-square w-full overflow-hidden bg-slate-900/50 relative flex items-center justify-center cursor-pointer transform-gpu group-hover:translate-z-10">
           {renderPreview()}
           
           {/* Advanced Interaction Overlay */}

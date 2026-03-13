@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Vault": {
+      "title": "Vault",
+      "description": "A secure container for images",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "vaultName": { "type": "string" },
+        "pinHash": { "type": "string" },
+        "images": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "size": { "type": "number" },
+              "mimeType": { "type": "string" },
+              "telegramFileId": { "type": "string" },
+              "uploadedAt": { "type": "number" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "createdAt": { "type": "number" },
+        "expiry": { "type": "string" },
+        "isEmergencyLocked": { "type": "boolean" },
+        "failedAttempts": { "type": "number" },
+        "isViewOnly": { "type": "boolean" }
+      },
+      "required": ["id", "username", "vaultName", "pinHash", "createdAt", "expiry"]
+    }
+  },
+  "firestore": {
+    "/vaults/{vaultId}": {
+      "schema": "Vault",
+      "description": "Collection of secure vaults"
+    }
+  }
+}
