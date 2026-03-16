@@ -100,7 +100,7 @@ const App: React.FC = () => {
       }
     };
     init();
-  }, []);
+  }, [isAuthReady]);
 
   const handleCreateSuccess = (vault: Vault) => {
     setActiveVault(vault);
