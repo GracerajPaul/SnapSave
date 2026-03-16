@@ -97,8 +97,9 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [newVaultName, setNewVaultName] = useState(vault.vaultName);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
-  const [tgHealth, setTgHealth] = useState<{ ok: boolean, bot?: any, error?: any } | null>(null);
+  const [tgHealth, setTgHealth] = useState<{ ok: boolean, bot?: any, chat?: any, error?: any } | null>(null);
   const [checkingHealth, setCheckingHealth] = useState(false);
+  const [testingUpload, setTestingUpload] = useState(false);
   
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -330,6 +331,21 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       setTgHealth({ ok: false, error: 'Network failure' });
     } finally {
       setCheckingHealth(false);
+    }
+  };
+
+  const testShardInjection = async () => {
+    setTestingUpload(true);
+    try {
+      const dummyFile = new File(['UPLINK_TEST_PAYLOAD'], 'test.txt', { type: 'text/plain' });
+      const tgResult = await TelegramService.uploadFile(dummyFile);
+      if (tgResult.file_id) {
+        alert('INJECTION SUCCESS: Shard established in cloud lattice.');
+      }
+    } catch (err: any) {
+      alert(`INJECTION FAILED: ${err.message}`);
+    } finally {
+      setTestingUpload(false);
     }
   };
 
@@ -707,18 +723,32 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                     <div>
                       <p className="text-[10px] font-black text-white uppercase tracking-widest">Uplink Health</p>
                       <p className="text-[8px] text-slate-500 uppercase tracking-widest">
-                        {tgHealth?.ok ? `Connected: @${tgHealth.bot.username}` : tgHealth ? `Error: ${tgHealth.error?.description || tgHealth.error}` : 'Status Unknown'}
+                        {tgHealth?.ok 
+                          ? `Bot: @${tgHealth.bot.username} | Chat: ${tgHealth.chat?.title || tgHealth.chat?.first_name || 'Connected'}` 
+                          : tgHealth 
+                            ? `Error: ${tgHealth.error?.description || tgHealth.error}` 
+                            : 'Status Unknown'}
                       </p>
                     </div>
                   </div>
-                  <button 
-                    type="button"
-                    onClick={checkUplinkHealth}
-                    disabled={checkingHealth}
-                    className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
-                  >
-                    {checkingHealth ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Check Uplink'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={checkUplinkHealth}
+                      disabled={checkingHealth}
+                      className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
+                    >
+                      {checkingHealth ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Check Health'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={testShardInjection}
+                      disabled={testingUpload}
+                      className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
+                    >
+                      {testingUpload ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Test Injection'}
+                    </button>
+                  </div>
                 </div>
 
                 <button 

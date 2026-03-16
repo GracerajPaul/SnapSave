@@ -21,7 +21,10 @@ async function startServer() {
   app.use(cors());
   app.use(express.json());
 
-  const upload = multer({ storage: multer.memoryStorage() });
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
+  });
 
   const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ");
   const TG_CHAT_ID = process.env.TG_CHAT_ID || "7303640347";
@@ -40,8 +43,29 @@ async function startServer() {
   // Telegram Health Check
   app.get("/api/vault/tg-health", async (_req, res) => {
     try {
-      const response = await axios.get(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getMe`);
-      res.json({ ok: true, bot: response.data.result });
+      const botInfo = await axios.get(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getMe`);
+      
+      // Also try to check the chat
+      let chatInfo = null;
+      try {
+        const chatRes = await axios.get(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getChat`, {
+          params: { chat_id: TG_CHAT_ID }
+        });
+        chatInfo = chatRes.data.result;
+      } catch (chatErr: any) {
+        chatInfo = { error: chatErr.response?.data || chatErr.message };
+      }
+
+      res.json({ 
+        ok: true, 
+        bot: botInfo.data.result,
+        chat: chatInfo,
+        config: {
+          hasToken: !!TG_BOT_TOKEN,
+          hasChatId: !!TG_CHAT_ID,
+          chatIdPrefix: TG_CHAT_ID?.substring(0, 4)
+        }
+      });
     } catch (error: any) {
       console.error("Telegram Health Check Error:", error.response?.data || error.message);
       res.status(500).json({ ok: false, error: error.response?.data || error.message });
@@ -50,11 +74,18 @@ async function startServer() {
 
   // Telegram Upload Proxy
   app.post("/api/vault/upload", upload.single("document"), async (req, res) => {
-    console.log("Received upload request for:", req.file?.originalname);
+    const fileName = req.file?.originalname || "unknown";
+    console.log(`[UPLOAD] Received request for: ${fileName} (${req.file?.size} bytes)`);
+    
     try {
       if (!req.file) {
-        console.error("Upload Error: No file in request");
-        return res.status(400).json({ ok: false, description: "No file uploaded" });
+        console.error("[UPLOAD] Error: No file in request");
+        return res.status(400).json({ ok: false, description: "No file uploaded. Ensure the field name is 'document'." });
+      }
+
+      if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
+        console.error("[UPLOAD] Error: Telegram configuration missing");
+        return res.status(500).json({ ok: false, description: "Server Telegram configuration is incomplete." });
       }
 
       const formData = new FormData();
@@ -64,23 +95,32 @@ async function startServer() {
         contentType: req.file.mimetype,
       });
 
-      console.log("Forwarding to Telegram...");
+      console.log(`[UPLOAD] Forwarding ${fileName} to Telegram...`);
+      
       const response = await axios.post(
         `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument`,
         formData,
         {
-          headers: formData.getHeaders(),
+          headers: {
+            ...formData.getHeaders(),
+          },
           maxContentLength: Infinity,
           maxBodyLength: Infinity,
-          timeout: 60000, // 60s timeout
+          timeout: 120000, // Increase to 120s for larger files
         }
       );
 
-      console.log("Telegram upload success");
+      console.log(`[UPLOAD] Telegram success for ${fileName}: ${response.data.ok}`);
       res.json(response.data);
     } catch (error: any) {
       const errorData = error.response?.data || { ok: false, description: error.message };
-      console.error("Telegram Upload Error:", JSON.stringify(errorData));
+      console.error(`[UPLOAD] Telegram Error for ${fileName}:`, JSON.stringify(errorData));
+      
+      // If it's a timeout or network error
+      if (error.code === 'ECONNABORTED') {
+        return res.status(504).json({ ok: false, description: "Gateway Timeout: Telegram took too long to respond." });
+      }
+
       res.status(error.response?.status || 500).json(errorData);
     }
   });
