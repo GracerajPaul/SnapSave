@@ -172,7 +172,7 @@ async function startServer() {
       console.log(`[DOWNLOAD][${requestId}] Fetching from Telegram: ${fileUrl.substring(0, 40)}...`);
 
       const response = await axios.get(fileUrl, { 
-        responseType: "stream",
+        responseType: "arraybuffer",
         timeout: 90000, // Increase to 90s for slower connections
         headers: {
           'User-Agent': 'SnapSave/1.0'
@@ -197,19 +197,8 @@ async function startServer() {
       // Cache for 1 hour
       res.setHeader("Cache-Control", "public, max-age=3600");
       
-      response.data.pipe(res);
-
-      // Handle stream completion and errors
-      response.data.on('end', () => {
-        console.log(`[DOWNLOAD][${requestId}] Stream completed successfully`);
-      });
-
-      response.data.on('error', (err: any) => {
-        console.error(`[DOWNLOAD][${requestId}] Stream Error:`, err.message);
-        if (!res.headersSent) {
-          res.status(500).send("Stream interrupted");
-        }
-      });
+      res.send(Buffer.from(response.data));
+      console.log(`[DOWNLOAD][${requestId}] Download completed successfully`);
     } catch (error: any) {
       const status = error.response?.status || 500;
       const data = error.response?.data || error.message;

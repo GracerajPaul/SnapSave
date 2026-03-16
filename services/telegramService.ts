@@ -33,7 +33,8 @@ export const TelegramService = {
         try {
           responseData = JSON.parse(xhr.responseText);
         } catch (e) {
-          responseData = { description: 'Malformed response from server.' };
+          console.error('[TELEGRAM] Failed to parse server response:', xhr.responseText.substring(0, 100));
+          responseData = { description: 'Malformed response from server (check console for details).' };
         }
 
         if (xhr.status >= 200 && xhr.status < 300) {

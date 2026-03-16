@@ -90,9 +90,15 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
  * Handles all database operations for vaults.
  */
 export const StorageService = {
-  
+  _isOffline: false,
+
+  setOfflineMode(isOffline: boolean) {
+    this._isOffline = isOffline;
+    console.log(`[STORAGE] Mode set to: ${isOffline ? 'LOCAL_ONLY' : 'CLOUD_SYNC'}`);
+  },
+
   isConnected() {
-    return true;
+    return !this._isOffline && !!auth.currentUser;
   },
 
   async createVault(params: {
@@ -118,6 +124,7 @@ export const StorageService = {
     };
 
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       // Check if username exists
       console.log(`[STORAGE] Checking username availability: ${params.username}`);
       const q = query(collection(db, 'vaults'), where('username', '==', params.username), limit(1));
@@ -163,6 +170,7 @@ export const StorageService = {
 
   async getVaultByUsername(username: string): Promise<Vault | null> {
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       const q = query(collection(db, 'vaults'), where('username', '==', username), limit(1));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
@@ -181,6 +189,7 @@ export const StorageService = {
 
   async getVaultById(id: string): Promise<Vault | null> {
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       const docRef = doc(db, 'vaults', id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
@@ -198,6 +207,7 @@ export const StorageService = {
 
   async updateVaultImages(id: string, images: VaultImage[]): Promise<Vault> {
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       const docRef = doc(db, 'vaults', id);
       await updateDoc(docRef, { images });
       const updatedSnap = await getDoc(docRef);
@@ -221,6 +231,7 @@ export const StorageService = {
 
   async updateVaultSettings(id: string, updates: Partial<Vault>): Promise<Vault> {
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       const docRef = doc(db, 'vaults', id);
       await updateDoc(docRef, updates);
       const updatedSnap = await getDoc(docRef);
@@ -258,6 +269,7 @@ export const StorageService = {
 
   async deleteVault(id: string) {
     try {
+      if (this._isOffline) throw new Error('Offline mode active');
       await deleteDoc(doc(db, 'vaults', id));
     } catch (e) {
       console.warn("Firebase delete failed, falling back to local storage", e);

@@ -24,28 +24,36 @@ const App: React.FC = () => {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [connectionMode, setConnectionMode] = useState<'cloud' | 'local'>('cloud');
 
+  // Sync connection mode with storage service
+  useEffect(() => {
+    StorageService.setOfflineMode(connectionMode === 'local');
+  }, [connectionMode]);
+
   // Initialize Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         try {
+          // Attempt anonymous sign-in
           await signInAnonymously(auth);
+          // The next onAuthStateChanged call will handle the 'user' case
+        } catch (err: any) {
+          console.warn('Anonymous auth failed, switching to local mode:', err.code || err.message);
+          setConnectionMode('local');
+          setIsAuthReady(true);
+        }
+      } else {
+        // User is authenticated (anonymous or admin)
+        try {
           // Verify Firestore is reachable
           await getDocFromServer(doc(db, 'vaults', 'connection-test'));
           setConnectionMode('cloud');
         } catch (err: any) {
-          console.warn('Cloud connection failed, switching to local mode:', err.code || err.message);
+          console.warn('Firestore unreachable, switching to local mode:', err.message);
           setConnectionMode('local');
         }
-      } else {
-        try {
-          await getDocFromServer(doc(db, 'vaults', 'connection-test'));
-          setConnectionMode('cloud');
-        } catch (err) {
-          setConnectionMode('local');
-        }
+        setIsAuthReady(true);
       }
-      setIsAuthReady(true);
     });
     return () => unsubscribe();
   }, []);
@@ -118,6 +126,7 @@ const App: React.FC = () => {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      setConnectionMode('cloud');
     } catch (err: any) {
       console.error('Admin login failed:', err);
       setError('Admin authentication failed: ' + err.message);
