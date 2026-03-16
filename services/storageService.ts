@@ -11,7 +11,7 @@ import {
   deleteDoc,
   limit
 } from 'firebase/firestore';
-import { db } from '../firebase.ts';
+import { db, auth } from '../firebase.ts';
 import { Vault, ExpiryOption, VaultImage } from '../types.ts';
 
 // LocalStorage Fallback Implementation
@@ -43,9 +43,41 @@ enum OperationType {
   WRITE = 'write',
 }
 
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string;
+    email?: string | null;
+    emailVerified?: boolean;
+    isAnonymous?: boolean;
+    tenantId?: string | null;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const errInfo = {
+  const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
     operationType,
     path
   };
@@ -89,18 +121,32 @@ export const StorageService = {
       // Check if username exists
       console.log(`[STORAGE] Checking username availability: ${params.username}`);
       const q = query(collection(db, 'vaults'), where('username', '==', params.username), limit(1));
-      const querySnapshot = await getDocs(q);
+      let querySnapshot;
+      try {
+        querySnapshot = await getDocs(q);
+      } catch (e) {
+        handleFirestoreError(e, OperationType.LIST, 'vaults');
+        return newVault; // unreachable
+      }
+
       if (!querySnapshot.empty) {
         console.warn(`[STORAGE] Username conflict: ${params.username}`);
         throw new Error('Username already claimed by another agent.');
       }
 
       console.log(`[STORAGE] Persisting vault to Firestore...`);
-      await setDoc(doc(db, 'vaults', vaultId), newVault);
+      try {
+        await setDoc(doc(db, 'vaults', vaultId), newVault);
+      } catch (e) {
+        handleFirestoreError(e, OperationType.CREATE, `vaults/${vaultId}`);
+      }
       console.log(`[STORAGE] Vault successfully persisted to cloud.`);
       return newVault as Vault;
     } catch (e: any) {
       if (e.message === 'Username already claimed by another agent.') throw e;
+      // If it's a Firestore error (JSON), re-throw it so ErrorBoundary catches it
+      if (e.message.startsWith('{')) throw e;
+
       console.error("[STORAGE] Cloud persistence failed, engaging local redundancy", e);
       
       // LocalStorage Fallback
@@ -124,6 +170,7 @@ export const StorageService = {
       }
     } catch (e) {
       console.warn("Firebase get failed, falling back to local storage", e);
+      // We don't call handleFirestoreError here because we want the fallback to work silently if possible
     }
 
     // LocalStorage Fallback
@@ -157,6 +204,10 @@ export const StorageService = {
       return updatedSnap.data() as Vault;
     } catch (e) {
       console.warn("Firebase update failed, falling back to local storage", e);
+      // If it's a permission error, we should probably know
+      if (e instanceof Error && e.message.includes('permission')) {
+        handleFirestoreError(e, OperationType.UPDATE, `vaults/${id}`);
+      }
     }
 
     // LocalStorage Fallback
@@ -176,6 +227,9 @@ export const StorageService = {
       return updatedSnap.data() as Vault;
     } catch (e) {
       console.warn("Firebase update failed, falling back to local storage", e);
+      if (e instanceof Error && e.message.includes('permission')) {
+        handleFirestoreError(e, OperationType.UPDATE, `vaults/${id}`);
+      }
     }
 
     // LocalStorage Fallback
@@ -207,6 +261,9 @@ export const StorageService = {
       await deleteDoc(doc(db, 'vaults', id));
     } catch (e) {
       console.warn("Firebase delete failed, falling back to local storage", e);
+      if (e instanceof Error && e.message.includes('permission')) {
+        handleFirestoreError(e, OperationType.DELETE, `vaults/${id}`);
+      }
     }
 
     // LocalStorage Fallback

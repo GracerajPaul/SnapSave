@@ -8,6 +8,11 @@ import { VaultDashboard } from './components/VaultDashboard.tsx';
 import { AboutPage } from './components/AboutPage.tsx';
 import { Vault, isVaultExpired } from './types.ts';
 import { StorageService } from './services/storageService.ts';
+import { ShieldCheck } from 'lucide-react';
+
+import { auth, db } from './firebase.ts';
+import { signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDocFromServer } from 'firebase/firestore';
 
 const SESSION_KEY = 'snapsave_active_session';
 
@@ -16,9 +21,39 @@ const App: React.FC = () => {
   const [activeVault, setActiveVault] = useState<Vault | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const [connectionMode, setConnectionMode] = useState<'cloud' | 'local'>('cloud');
+
+  // Initialize Firebase Auth
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        try {
+          await signInAnonymously(auth);
+          // Verify Firestore is reachable
+          await getDocFromServer(doc(db, 'vaults', 'connection-test'));
+          setConnectionMode('cloud');
+        } catch (err: any) {
+          console.warn('Cloud connection failed, switching to local mode:', err.code || err.message);
+          setConnectionMode('local');
+        }
+      } else {
+        try {
+          await getDocFromServer(doc(db, 'vaults', 'connection-test'));
+          setConnectionMode('cloud');
+        } catch (err) {
+          setConnectionMode('local');
+        }
+      }
+      setIsAuthReady(true);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Initialize and check for existing session or URL vault access
   useEffect(() => {
+    if (!isAuthReady) return;
+
     const init = async () => {
       try {
         // 1. Check URL for direct vault access via hash
@@ -79,6 +114,16 @@ const App: React.FC = () => {
     setView('dashboard');
   };
 
+  const handleAdminLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err: any) {
+      console.error('Admin login failed:', err);
+      setError('Admin authentication failed: ' + err.message);
+    }
+  };
+
   const handleLogout = () => {
     setActiveVault(null);
     try {
@@ -90,23 +135,6 @@ const App: React.FC = () => {
     // Clear any hash
     window.location.hash = '';
   };
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="p-8 bg-red-500/10 border border-red-500/20 rounded-[3rem] max-w-md">
-          <h2 className="text-2xl font-[1000] text-red-500 uppercase italic tracking-tighter mb-4">Critical System Error</h2>
-          <p className="text-slate-400 font-mono text-xs mb-8">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
-          >
-            Reboot System
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -122,6 +150,8 @@ const App: React.FC = () => {
       onLogout={handleLogout} 
       onAboutClick={() => setView('about')}
       onHomeClick={() => setView('landing')}
+      connectionMode={connectionMode}
+      onAdminLogin={handleAdminLogin}
     >
       <div className="atmosphere" />
 

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Shield, LogOut, FileText, Info } from 'lucide-react';
+import { Shield, LogOut, FileText, Info, Cloud, WifiOff, ShieldCheck } from 'lucide-react';
 import { APP_NAME, TAGLINE } from '../constants.tsx';
 import { Vault } from '../types.ts';
 import { TermsModal } from './TermsModal.tsx';
@@ -11,27 +11,60 @@ interface LayoutProps {
   onLogout: () => void;
   onAboutClick?: () => void;
   onHomeClick?: () => void;
+  connectionMode?: 'cloud' | 'local';
+  onAdminLogin?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeVault, onLogout, onAboutClick, onHomeClick }) => {
+export const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  activeVault, 
+  onLogout, 
+  onAboutClick, 
+  onHomeClick,
+  connectionMode = 'cloud',
+  onAdminLogin
+}) => {
   const [showTerms, setShowTerms] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="sticky top-0 z-50 glass-card px-4 py-3 md:px-8 border-b border-white/5">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
-          <div 
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={onHomeClick}
-          >
-            <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-indigo-600/20">
-              <Shield className="text-white w-5 h-5 md:w-6 md:h-6" />
+          <div className="flex items-center gap-4 md:gap-8">
+            <div 
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={onHomeClick}
+            >
+              <div className="bg-indigo-600 p-2 rounded-xl group-hover:scale-110 transition-transform shadow-lg shadow-indigo-600/20">
+                <Shield className="text-white w-5 h-5 md:w-6 md:h-6" />
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-lg md:text-xl font-black bg-gradient-to-r from-indigo-300 to-cyan-400 bg-clip-text text-transparent leading-none italic uppercase tracking-tighter">
+                  {APP_NAME}
+                </h1>
+                <p className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold hidden xs:block">{TAGLINE}</p>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg md:text-xl font-black bg-gradient-to-r from-indigo-300 to-cyan-400 bg-clip-text text-transparent leading-none italic uppercase tracking-tighter">
-                {APP_NAME}
-              </h1>
-              <p className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-widest font-bold hidden xs:block">{TAGLINE}</p>
+
+            {/* Connection Status Indicator */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/5">
+              {connectionMode === 'cloud' ? (
+                <>
+                  <Cloud className="w-3 h-3 text-emerald-400" />
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Cloud Uplink Active</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3 h-3 text-amber-400" />
+                  <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Local Redundancy Mode</span>
+                  <button 
+                    onClick={onAdminLogin}
+                    className="ml-2 px-2 py-0.5 bg-white/10 hover:bg-white/20 rounded text-[8px] font-black text-white uppercase transition-colors flex items-center gap-1"
+                  >
+                    <ShieldCheck className="w-2.5 h-2.5" /> Admin Sync
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
