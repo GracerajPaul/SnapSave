@@ -638,7 +638,10 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                   }} 
                   onUpdate={async (updatedImg) => {
                     const updatedImages = vault.images.map(i => i.id === updatedImg.id ? updatedImg : i);
-                    const v = await StorageService.updateVaultImages(vault.id, updatedImages);
+                    const v = await StorageService.updateVaultImages(vault.id, updatedImages.map(img => ({
+                      ...img,
+                      url: '' // Ensure no blob URLs are persisted
+                    })));
                     onVaultUpdate(v);
                   }}
                 />
@@ -723,6 +726,20 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
               </div>
 
               <div className="pt-8 md:pt-12 border-t border-white/5 space-y-6">
+                <div className="p-6 bg-slate-950/50 rounded-2xl border border-white/5 space-y-4">
+                  <h4 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    Troubleshooting
+                  </h4>
+                  <ul className="text-[9px] text-slate-500 space-y-2 list-disc pl-4 uppercase tracking-wider">
+                    <li>Ensure <span className="text-white">TG_BOT_TOKEN</span> and <span className="text-white">TG_CHAT_ID</span> are set in environment variables.</li>
+                    <li>Verify the bot is a <span className="text-white">Member</span> of the target chat.</li>
+                    <li>Check if the chat ID is correct (use @userinfobot to find your ID).</li>
+                    <li>If images fail to load, try the <span className="text-white">Check Health</span> button below.</li>
+                    <li>Clear browser cache if you encounter persistent UI glitches.</li>
+                  </ul>
+                </div>
+
                 <div className="flex items-center justify-between p-6 bg-slate-950/50 rounded-2xl border border-white/5">
                   <div className="flex items-center gap-4">
                     <div className={`w-3 h-3 rounded-full ${tgHealth?.ok ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : tgHealth ? 'bg-red-500 shadow-[0_0_10px_#ef4444]' : 'bg-slate-700'}`} />

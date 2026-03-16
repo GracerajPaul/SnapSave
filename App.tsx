@@ -15,40 +15,46 @@ const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'create' | 'access' | 'dashboard' | 'about'>('landing');
   const [activeVault, setActiveVault] = useState<Vault | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize and check for existing session or URL vault access
   useEffect(() => {
     const init = async () => {
-      // 1. Check URL for direct vault access via hash
-      const hash = window.location.hash;
-      const urlParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
-      const vaultIdFromUrl = urlParams.get('vaultId');
-      
-      // 2. Check LocalStorage for an active session
-      let savedVaultId = null;
       try {
-        savedVaultId = localStorage.getItem(SESSION_KEY);
-      } catch (e) {
-        console.warn('LocalStorage access denied', e);
-      }
-      
-      if (vaultIdFromUrl) {
-        setView('access');
-      } else if (savedVaultId) {
+        // 1. Check URL for direct vault access via hash
+        const hash = window.location.hash;
+        const urlParams = new URLSearchParams(hash.includes('?') ? hash.split('?')[1] : '');
+        const vaultIdFromUrl = urlParams.get('vaultId');
+        
+        // 2. Check LocalStorage for an active session
+        let savedVaultId = null;
         try {
-          const vault = await StorageService.getVaultById(savedVaultId);
-          if (vault && !vault.isEmergencyLocked && !isVaultExpired(vault)) {
-            setActiveVault(vault);
-            setView('dashboard');
-          } else {
+          savedVaultId = localStorage.getItem(SESSION_KEY);
+        } catch (e) {
+          console.warn('LocalStorage access denied', e);
+        }
+        
+        if (vaultIdFromUrl) {
+          setView('access');
+        } else if (savedVaultId) {
+          try {
+            const vault = await StorageService.getVaultById(savedVaultId);
+            if (vault && !vault.isEmergencyLocked && !isVaultExpired(vault)) {
+              setActiveVault(vault);
+              setView('dashboard');
+            } else {
+              try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+            }
+          } catch (e) {
             try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
           }
-        } catch (e) {
-          try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
         }
+      } catch (err: any) {
+        console.error('Initialization error:', err);
+        setError(err.message || 'System initialization failure');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     init();
   }, []);
@@ -84,6 +90,23 @@ const App: React.FC = () => {
     // Clear any hash
     window.location.hash = '';
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="p-8 bg-red-500/10 border border-red-500/20 rounded-[3rem] max-w-md">
+          <h2 className="text-2xl font-[1000] text-red-500 uppercase italic tracking-tighter mb-4">Critical System Error</h2>
+          <p className="text-slate-400 font-mono text-xs mb-8">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:bg-slate-200 transition-all"
+          >
+            Reboot System
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

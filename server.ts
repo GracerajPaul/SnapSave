@@ -155,36 +155,57 @@ async function startServer() {
   // Telegram File Download Proxy (to avoid CORS on direct file links)
   app.get("/api/vault/shard-download", async (req, res) => {
     const { filePath } = req.query;
-    console.log(`[DOWNLOAD] Request for path: ${filePath}`);
+    const requestId = Math.random().toString(36).substring(7);
+    console.log(`[DOWNLOAD][${requestId}] Request for path: ${filePath}`);
     
     try {
-      if (!filePath) return res.status(400).send("Missing filePath");
-      if (!TG_BOT_TOKEN) return res.status(500).send("TG_BOT_TOKEN is not configured");
+      if (!filePath) {
+        console.error(`[DOWNLOAD][${requestId}] Error: Missing filePath`);
+        return res.status(400).send("Missing filePath");
+      }
+      if (!TG_BOT_TOKEN) {
+        console.error(`[DOWNLOAD][${requestId}] Error: TG_BOT_TOKEN not configured`);
+        return res.status(500).send("TG_BOT_TOKEN is not configured");
+      }
 
       const fileUrl = `https://api.telegram.org/file/bot${TG_BOT_TOKEN}/${filePath as string}`;
+      console.log(`[DOWNLOAD][${requestId}] Fetching from Telegram: ${fileUrl.substring(0, 40)}...`);
+
       const response = await axios.get(fileUrl, { 
         responseType: "stream",
-        timeout: 60000, // 60 second timeout for downloads
+        timeout: 90000, // Increase to 90s for slower connections
         headers: {
           'User-Agent': 'SnapSave/1.0'
         }
       });
       
+      console.log(`[DOWNLOAD][${requestId}] Telegram responded with status: ${response.status}`);
+
       // Forward headers
       const contentType = response.headers["content-type"];
-      if (contentType) res.setHeader("Content-Type", contentType);
+      if (contentType) {
+        res.setHeader("Content-Type", contentType);
+        console.log(`[DOWNLOAD][${requestId}] Content-Type: ${contentType}`);
+      }
       
       const contentLength = response.headers["content-length"];
-      if (contentLength) res.setHeader("Content-Length", contentLength);
+      if (contentLength) {
+        res.setHeader("Content-Length", contentLength);
+        console.log(`[DOWNLOAD][${requestId}] Content-Length: ${contentLength}`);
+      }
 
       // Cache for 1 hour
       res.setHeader("Cache-Control", "public, max-age=3600");
       
       response.data.pipe(res);
 
-      // Handle stream errors
+      // Handle stream completion and errors
+      response.data.on('end', () => {
+        console.log(`[DOWNLOAD][${requestId}] Stream completed successfully`);
+      });
+
       response.data.on('error', (err: any) => {
-        console.error("[DOWNLOAD] Stream Error:", err.message);
+        console.error(`[DOWNLOAD][${requestId}] Stream Error:`, err.message);
         if (!res.headersSent) {
           res.status(500).send("Stream interrupted");
         }
@@ -192,7 +213,15 @@ async function startServer() {
     } catch (error: any) {
       const status = error.response?.status || 500;
       const data = error.response?.data || error.message;
-      console.error(`[DOWNLOAD] Telegram Download Error [${status}]:`, data);
+      console.error(`[DOWNLOAD][${requestId}] Telegram Download Error [${status}]:`, data);
+      
+      if (error.code === 'ECONNABORTED') {
+        console.error(`[DOWNLOAD][${requestId}] Timeout reached`);
+        if (!res.headersSent) {
+          return res.status(504).send("Gateway Timeout: Telegram took too long to serve the file.");
+        }
+      }
+
       if (!res.headersSent) {
         res.status(status).send(typeof data === 'string' ? data : "Failed to download file");
       }

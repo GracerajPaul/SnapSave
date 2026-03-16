@@ -70,6 +70,8 @@ export const StorageService = {
     expiry: ExpiryOption;
   }): Promise<Vault> {
     const vaultId = crypto.randomUUID();
+    console.log(`[STORAGE] Initiating vault creation for: ${params.username} (ID: ${vaultId})`);
+    
     const newVault: any = {
       id: vaultId,
       username: params.username,
@@ -85,17 +87,21 @@ export const StorageService = {
 
     try {
       // Check if username exists
+      console.log(`[STORAGE] Checking username availability: ${params.username}`);
       const q = query(collection(db, 'vaults'), where('username', '==', params.username), limit(1));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
+        console.warn(`[STORAGE] Username conflict: ${params.username}`);
         throw new Error('Username already claimed by another agent.');
       }
 
+      console.log(`[STORAGE] Persisting vault to Firestore...`);
       await setDoc(doc(db, 'vaults', vaultId), newVault);
+      console.log(`[STORAGE] Vault successfully persisted to cloud.`);
       return newVault as Vault;
     } catch (e: any) {
       if (e.message === 'Username already claimed by another agent.') throw e;
-      console.warn("Firebase create failed, falling back to local storage", e);
+      console.error("[STORAGE] Cloud persistence failed, engaging local redundancy", e);
       
       // LocalStorage Fallback
       const vaults = getLocalVaults();
@@ -104,6 +110,7 @@ export const StorageService = {
       }
       vaults.push(newVault);
       saveLocalVaults(vaults);
+      console.log(`[STORAGE] Vault successfully persisted to local redundancy.`);
       return newVault as Vault;
     }
   },
