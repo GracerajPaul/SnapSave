@@ -29,32 +29,35 @@ export const TelegramService = {
       }
 
       xhr.onload = () => {
+        let responseData: any = {};
+        try {
+          responseData = JSON.parse(xhr.responseText);
+        } catch (e) {
+          responseData = { description: 'Malformed response from server.' };
+        }
+
         if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (data.ok) {
-              const res = data.result;
-              const fileId = (
-                res.document?.file_id || 
-                res.video?.file_id || 
-                res.animation?.file_id || 
-                res.audio?.file_id || 
-                res.photo?.[res.photo.length - 1]?.file_id
-              );
-              
-              if (fileId) {
-                resolve({ file_id: fileId });
-              } else {
-                reject(new Error('Upload successful but file ID could not be extracted.'));
-              }
+          if (responseData.ok) {
+            const res = responseData.result;
+            const fileId = (
+              res.document?.file_id || 
+              res.video?.file_id || 
+              res.animation?.file_id || 
+              res.audio?.file_id || 
+              res.photo?.[res.photo.length - 1]?.file_id
+            );
+            
+            if (fileId) {
+              resolve({ file_id: fileId });
             } else {
-              reject(new Error(data.description || 'Telegram upload refused.'));
+              reject(new Error('Upload successful but file ID could not be extracted.'));
             }
-          } catch (e) {
-            reject(new Error('Malformed response from proxy.'));
+          } else {
+            reject(new Error(responseData.description || 'Telegram upload refused.'));
           }
         } else {
-          reject(new Error(`Proxy Error: ${xhr.status} - ${xhr.statusText}`));
+          const errorMsg = responseData.description || `Proxy Error: ${xhr.status}`;
+          reject(new Error(errorMsg));
         }
       };
 

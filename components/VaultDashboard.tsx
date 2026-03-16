@@ -97,6 +97,8 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [newVaultName, setNewVaultName] = useState(vault.vaultName);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [tgHealth, setTgHealth] = useState<{ ok: boolean, bot?: any, error?: any } | null>(null);
+  const [checkingHealth, setCheckingHealth] = useState(false);
   
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -228,7 +230,8 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           updatedImages.push(newAsset);
         } catch (uploadErr) {
           console.error('Upload error:', uploadErr);
-          alert(`INJECTION FAILED: Uplink refused for ${file.name}.`);
+          const errorMsg = uploadErr instanceof Error ? uploadErr.message : 'Uplink refused';
+          alert(`INJECTION FAILED: ${errorMsg} for ${file.name}.`);
           break;
         }
       }
@@ -314,6 +317,19 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
       alert('PROTOCOL ERROR: Could not update node parameters.');
     } finally {
       setIsUpdatingSettings(false);
+    }
+  };
+
+  const checkUplinkHealth = async () => {
+    setCheckingHealth(true);
+    try {
+      const res = await fetch('/api/vault/tg-health');
+      const data = await res.json();
+      setTgHealth(data);
+    } catch (err) {
+      setTgHealth({ ok: false, error: 'Network failure' });
+    } finally {
+      setCheckingHealth(false);
     }
   };
 
@@ -684,7 +700,27 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
                 </button>
               </div>
 
-              <div className="pt-8 md:pt-12 border-t border-white/5">
+              <div className="pt-8 md:pt-12 border-t border-white/5 space-y-6">
+                <div className="flex items-center justify-between p-6 bg-slate-950/50 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-3 h-3 rounded-full ${tgHealth?.ok ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : tgHealth ? 'bg-red-500 shadow-[0_0_10px_#ef4444]' : 'bg-slate-700'}`} />
+                    <div>
+                      <p className="text-[10px] font-black text-white uppercase tracking-widest">Uplink Health</p>
+                      <p className="text-[8px] text-slate-500 uppercase tracking-widest">
+                        {tgHealth?.ok ? `Connected: @${tgHealth.bot.username}` : tgHealth ? `Error: ${tgHealth.error?.description || tgHealth.error}` : 'Status Unknown'}
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={checkUplinkHealth}
+                    disabled={checkingHealth}
+                    className="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
+                  >
+                    {checkingHealth ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Check Uplink'}
+                  </button>
+                </div>
+
                 <button 
                   type="submit"
                   disabled={isUpdatingSettings}

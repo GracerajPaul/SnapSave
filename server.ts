@@ -37,10 +37,23 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
+  // Telegram Health Check
+  app.get("/api/vault/tg-health", async (_req, res) => {
+    try {
+      const response = await axios.get(`https://api.telegram.org/bot${TG_BOT_TOKEN}/getMe`);
+      res.json({ ok: true, bot: response.data.result });
+    } catch (error: any) {
+      console.error("Telegram Health Check Error:", error.response?.data || error.message);
+      res.status(500).json({ ok: false, error: error.response?.data || error.message });
+    }
+  });
+
   // Telegram Upload Proxy
   app.post("/api/vault/upload", upload.single("document"), async (req, res) => {
+    console.log("Received upload request for:", req.file?.originalname);
     try {
       if (!req.file) {
+        console.error("Upload Error: No file in request");
         return res.status(400).json({ ok: false, description: "No file uploaded" });
       }
 
@@ -51,6 +64,7 @@ async function startServer() {
         contentType: req.file.mimetype,
       });
 
+      console.log("Forwarding to Telegram...");
       const response = await axios.post(
         `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendDocument`,
         formData,
@@ -58,13 +72,16 @@ async function startServer() {
           headers: formData.getHeaders(),
           maxContentLength: Infinity,
           maxBodyLength: Infinity,
+          timeout: 60000, // 60s timeout
         }
       );
 
+      console.log("Telegram upload success");
       res.json(response.data);
     } catch (error: any) {
-      console.error("Telegram Upload Error:", error.response?.data || error.message);
-      res.status(error.response?.status || 500).json(error.response?.data || { ok: false, description: error.message });
+      const errorData = error.response?.data || { ok: false, description: error.message };
+      console.error("Telegram Upload Error:", JSON.stringify(errorData));
+      res.status(error.response?.status || 500).json(errorData);
     }
   });
 
