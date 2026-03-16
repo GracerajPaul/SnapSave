@@ -17,7 +17,7 @@ export const TelegramService = {
       const xhr = new XMLHttpRequest();
       xhr.timeout = 300000; // 5 minutes
       
-      xhr.open('POST', '/api/vault/upload', true);
+      xhr.open('POST', `${window.location.origin}/api/vault/upload`, true);
 
       if (onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -76,7 +76,7 @@ export const TelegramService = {
     if (urlCache.has(fileId)) return urlCache.get(fileId)!;
     
     try {
-      const response = await fetch(`/api/vault/shard-info/${encodeURIComponent(fileId)}`);
+      const response = await fetch(`${window.location.origin}/api/vault/shard-info/${encodeURIComponent(fileId)}`);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ description: 'Unknown error' }));
@@ -88,8 +88,10 @@ export const TelegramService = {
       
       if (data.ok) {
         const filePath = data.result.file_path;
-        const downloadUrl = `/api/vault/shard-download?filePath=${encodeURIComponent(filePath)}`;
-        urlCache.set(fileId, downloadUrl);
+        const downloadUrl = `${window.location.origin}/api/vault/shard-download?filePath=${encodeURIComponent(filePath)}`;
+        if (downloadUrl) {
+          urlCache.set(fileId, downloadUrl);
+        }
         return downloadUrl;
       }
       return '';

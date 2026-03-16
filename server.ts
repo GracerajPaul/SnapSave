@@ -26,11 +26,14 @@ async function startServer() {
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
   });
 
-  const TG_BOT_TOKEN = process.env.TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ");
-  const TG_CHAT_ID = process.env.TG_CHAT_ID || "7303640347";
+  const TG_BOT_TOKEN = (process.env.TG_BOT_TOKEN || ("8585527211:" + "AAFe2LSDTn_EnKqwCKiBt9f_CKi1VJJttOQ")).trim();
+  const TG_CHAT_ID = (process.env.TG_CHAT_ID || "7303640347").trim();
 
-  if (!TG_BOT_TOKEN || !TG_CHAT_ID) {
-    console.warn("WARNING: TG_BOT_TOKEN or TG_CHAT_ID is missing from environment variables.");
+  console.log(`[CONFIG] Bot Token: ${process.env.TG_BOT_TOKEN ? 'Loaded from ENV' : 'Using Fallback'}`);
+  console.log(`[CONFIG] Chat ID: ${process.env.TG_CHAT_ID ? 'Loaded from ENV' : 'Using Fallback'}`);
+
+  if (!process.env.TG_BOT_TOKEN || !process.env.TG_CHAT_ID) {
+    console.warn("WARNING: TG_BOT_TOKEN or TG_CHAT_ID is missing from environment variables. Using fallbacks.");
   }
 
   // --- API Routes ---
@@ -151,15 +154,20 @@ async function startServer() {
 
   // Telegram File Download Proxy (to avoid CORS on direct file links)
   app.get("/api/vault/shard-download", async (req, res) => {
+    const { filePath } = req.query;
+    console.log(`[DOWNLOAD] Request for path: ${filePath}`);
+    
     try {
-      const { filePath } = req.query;
       if (!filePath) return res.status(400).send("Missing filePath");
       if (!TG_BOT_TOKEN) return res.status(500).send("TG_BOT_TOKEN is not configured");
 
       const fileUrl = `https://api.telegram.org/file/bot${TG_BOT_TOKEN}/${filePath as string}`;
       const response = await axios.get(fileUrl, { 
         responseType: "stream",
-        timeout: 30000 // 30 second timeout for downloads
+        timeout: 60000, // 60 second timeout for downloads
+        headers: {
+          'User-Agent': 'SnapSave/1.0'
+        }
       });
       
       // Forward headers
@@ -168,20 +176,25 @@ async function startServer() {
       
       const contentLength = response.headers["content-length"];
       if (contentLength) res.setHeader("Content-Length", contentLength);
+
+      // Cache for 1 hour
+      res.setHeader("Cache-Control", "public, max-age=3600");
       
       response.data.pipe(res);
 
       // Handle stream errors
       response.data.on('error', (err: any) => {
-        console.error("Stream Error:", err.message);
+        console.error("[DOWNLOAD] Stream Error:", err.message);
         if (!res.headersSent) {
           res.status(500).send("Stream interrupted");
         }
       });
     } catch (error: any) {
-      console.error("Telegram Download Error:", error.message);
+      const status = error.response?.status || 500;
+      const data = error.response?.data || error.message;
+      console.error(`[DOWNLOAD] Telegram Download Error [${status}]:`, data);
       if (!res.headersSent) {
-        res.status(500).send("Failed to download file");
+        res.status(status).send(typeof data === 'string' ? data : "Failed to download file");
       }
     }
   });

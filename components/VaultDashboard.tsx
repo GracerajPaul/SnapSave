@@ -226,9 +226,12 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
             mimeType: file.type || 'application/octet-stream',
             telegramFileId: tgResult.file_id,
             uploadedAt: Date.now(),
-            url: URL.createObjectURL(file)
+            url: '' // Don't store blob URL in DB, it's session-specific
           };
-          updatedImages.push(newAsset);
+          
+          // For immediate UI update, we can keep the blob URL locally
+          const assetWithLocalUrl = { ...newAsset, url: URL.createObjectURL(file) };
+          updatedImages.push(assetWithLocalUrl);
         } catch (uploadErr) {
           console.error('Upload error:', uploadErr);
           const errorMsg = uploadErr instanceof Error ? uploadErr.message : 'Uplink refused';
@@ -236,7 +239,10 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
           break;
         }
       }
-      const updatedVault = await StorageService.updateVaultImages(vault.id, updatedImages);
+      const updatedVault = await StorageService.updateVaultImages(vault.id, updatedImages.map(img => ({
+        ...img,
+        url: '' // Ensure no blob URLs are persisted
+      })));
       onVaultUpdate(updatedVault);
     } finally {
       setUploading(false);
@@ -324,7 +330,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ vault, onVaultUp
   const checkUplinkHealth = async () => {
     setCheckingHealth(true);
     try {
-      const res = await fetch('/api/vault/tg-health');
+      const res = await fetch(`${window.location.origin}/api/vault/tg-health`);
       const data = await res.json();
       setTgHealth(data);
     } catch (err) {

@@ -51,24 +51,36 @@ export const ImageCard: React.FC<ImageCardProps> = ({ image, isViewOnly, onDelet
     if (!isVisible) return;
 
     const hydrateAsset = async () => {
-      const isLocalBlob = displayUrl.startsWith('blob:');
-      if (isLocalBlob) {
+      // If we already have a valid cloud URL, don't re-hydrate
+      if (displayUrl && displayUrl.includes('/api/vault/shard-download')) {
+        return;
+      }
+
+      // If it's a blob URL, check if it's still valid
+      if (displayUrl && displayUrl.startsWith('blob:')) {
         try {
           const res = await fetch(displayUrl, { method: 'HEAD' });
           if (res.ok) return;
-        } catch (e) {}
+        } catch (e) {
+          // Blob is stale, proceed to hydrate
+        }
       }
 
       setResolving(true);
-      const cloudUrl = await TelegramService.getImageUrl(image.telegramFileId);
-      if (cloudUrl) {
-        setDisplayUrl(cloudUrl);
+      try {
+        const cloudUrl = await TelegramService.getImageUrl(image.telegramFileId);
+        if (cloudUrl) {
+          setDisplayUrl(cloudUrl);
+        }
+      } catch (err) {
+        console.error('Hydration failed:', err);
+      } finally {
+        setResolving(false);
       }
-      setResolving(false);
     };
 
     hydrateAsset();
-  }, [isVisible, image.telegramFileId]);
+  }, [isVisible, image.telegramFileId, displayUrl]);
 
   const formatSize = (bytes: number) => {
     if (bytes === 0) return '0 B';
